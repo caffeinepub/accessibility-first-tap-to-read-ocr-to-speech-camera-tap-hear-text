@@ -1,14 +1,12 @@
 # Specification
 
 ## Summary
-**Goal:** Make the live camera preview reliably start on supported devices/browsers, with a dependable manual-start fallback and clear, actionable error guidance when startup fails.
+**Goal:** Fix the camera permission/startup flow so granting camera access reliably results in a live preview, with accurate permission-state messaging and clear recovery paths when startup/preview fails.
 
 **Planned changes:**
-- Fix the camera startup flow so the preview transitions from “Starting Camera...” to a live video feed on initial load (when getUserMedia is supported and the page is in a secure context).
-- Add/adjust timeout and state handling so automatic startup failures never remain stuck on a loading screen, instead moving to the manual “Start Camera” fallback or a clear error state.
-- Ensure the manual user-gesture “Start Camera” fallback is consistently shown when automatic startup doesn’t complete promptly and successfully starts the camera when tapped.
-- Prevent infinite retry loops by providing bounded retry behavior and an always-actionable next step (Start Camera / Retry Camera Access / specific error message).
-- Improve error detection and messaging (English only) for common failure cases (HTTPS required, permission denied, camera in use, no camera found) and provide a working “Retry Camera Access” action where appropriate.
-- Attempt to resume the camera when returning to the app/tab (visibilitychange to visible) if permissions/devices are available.
+- Update camera startup flow to transition from “Starting Camera / Please allow camera access” to an active preview after permission is granted, and avoid stale permission-required messaging.
+- Improve permission-state detection and UI messaging to distinguish: not yet requested, denied/blocked, and granted-but-stream/preview failed; provide actionable English messages with Retry where appropriate.
+- Add a blank-preview watchdog that detects when the stream is “active” but the video never renders frames, performs one controlled automatic restart, and then shows a “Camera Error” state with Retry if still blank.
+- Ensure the manual full-screen “Start Camera” fallback appears when startup fails silently after permission is granted, and that tapping it reliably triggers a fresh start attempt and resolves to preview or a clear error (not indefinite loading).
 
-**User-visible outcome:** On supported HTTPS pages, the camera preview starts without needing a reload; if it can’t start automatically, the app quickly shows a clear “Start Camera” fallback or a specific error message with a working retry option.
+**User-visible outcome:** After granting camera permission, users see a live camera preview within a few seconds on supported devices; if the camera can’t start or the preview is blank, the app shows correct, actionable messages and provides Retry and/or a reliable manual “Start Camera” fallback.

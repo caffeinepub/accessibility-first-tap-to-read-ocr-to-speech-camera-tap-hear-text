@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.0.0",
-  "projectStateVersion": 7,
+  "projectStateVersion": 9,
   "summary": "Android accessibility-first OCR-to-speech app: point phone, tap anywhere to scan text with on-device ML Kit OCR and read aloud via Android TTS; minimal UI, TalkBack-friendly, no accounts/cloud/subscriptions.",
   "architectural_notes": [
     "Platform: Android (Kotlin).",
@@ -10,7 +10,8 @@
     "UX: accessibility-first for TalkBack; minimal UI; portrait-only."
   ],
   "known_issues": [
-    "Camera does not start (user reports it never starts on the current build)."
+    "Camera does not start (user reports it never starts on the current build).",
+    "After granting camera permission, camera preview remains blank and app still prompts to enable camera permissions (possible permission-state detection/startup bug)."
   ],
   "isFixRequest": true,
   "existing_features": [
@@ -123,6 +124,38 @@
       "title": "Improve camera error detection and user guidance so that when camera startup fails, the UI surfaces a specific, English, actionable message (e.g., HTTPS required, permission denied, no camera found, camera in use) rather than only showing a generic loading state.",
       "reqIds": [
         "REQ-14"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-fix-the-camera-startup-flow-so-that-after-the-user-grants-camera-permission-the-app-reliably-transitions-from-the-starting-camera-please-allow-camera-access-loading-ui-to-an-active-live-preview-rather-than-remaining-blank-or-continuing-to-imply-permissions-are-not-enabled",
+      "title": "Fix the camera startup flow so that after the user grants camera permission, the app reliably transitions from the \"Starting Camera... / Please allow camera access\" loading UI to an active live preview, rather than remaining blank or continuing to imply permissions are not enabled.",
+      "reqIds": [
+        "REQ-15"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-improve-camera-permission-state-detection-and-messaging-so-the-app-distinguishes-between-1-permission-not-yet-requested-2-permission-denied-blocked-and-3-permission-granted-but-camera-stream-failed-blank-ensure-each-case-shows-a-correct-english-actionable-message",
+      "title": "Improve camera permission-state detection and messaging so the app distinguishes between: (1) permission not yet requested, (2) permission denied/blocked, and (3) permission granted but camera stream failed/blank; ensure each case shows a correct, English, actionable message.",
+      "reqIds": [
+        "REQ-16"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-a-blank-preview-watchdog-when-the-camera-is-reported-as-active-but-the-video-element-does-not-begin-rendering-frames-e-g-videowidth-videoheight-stay-0-or-no-playing-state-within-a-short-timeout-automatically-attempt-a-controlled-restart-of-the-camera-stream-once-and-if-it-still-fails-surface-a-clear-error-state-with-retry",
+      "title": "Add a blank-preview watchdog: when the camera is reported as active but the <video> element does not begin rendering frames (e.g., videoWidth/videoHeight stay 0 or no 'playing' state) within a short timeout, automatically attempt a controlled restart of the camera stream once, and if it still fails, surface a clear error state with Retry.",
+      "reqIds": [
+        "REQ-17"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-ensure-the-manual-start-camera-fallback-is-triggered-consistently-not-only-when-startup-is-delayed-but-also-when-startup-fails-silently-no-explicit-error-after-permission-was-granted-the-fallback-must-successfully-start-the-camera-when-tapped",
+      "title": "Ensure the manual 'Start Camera' fallback is triggered consistently not only when startup is delayed, but also when startup fails silently (no explicit error) after permission was granted; the fallback must successfully start the camera when tapped.",
+      "reqIds": [
+        "REQ-18"
       ],
       "version": 1
     }

@@ -1,76 +1,105 @@
 {
   "kind": "build_request",
-  "title": "Fix camera preview not starting and ensure reliable fallback + guidance",
+  "title": "Fix camera permission detection and blank preview after granting access",
   "priority": "high",
   "requirements": [
     {
-      "id": "REQ-12",
-      "text": "Fix the camera startup flow so the live camera preview reliably starts on initial load (on supported devices/browsers) instead of staying stuck on the loading screen.",
+      "id": "REQ-15",
+      "text": "Fix the camera startup flow so that after the user grants camera permission, the app reliably transitions from the \"Starting Camera... / Please allow camera access\" loading UI to an active live preview, rather than remaining blank or continuing to imply permissions are not enabled.",
       "target": "frontend",
       "source": {
         "messageIds": [
           "msg-6"
         ],
         "quotes": [
-          "The camera doesn't even start"
+          "I allowed camera access but the camera isn't showing anything and It says I need to enable camera perms"
         ]
       },
       "acceptanceCriteria": [
-        "On a device/browser that supports getUserMedia in a secure context (HTTPS), the camera preview transitions from \"Starting Camera...\" to a live video feed without requiring a manual reload.",
-        "If automatic startup fails, the app must not remain indefinitely in a loading state; it must transition to either a clear error screen or the manual-start fallback.",
-        "Re-entering the tab/app after backgrounding (visibilitychange to visible) triggers a camera resume attempt, and the preview starts if permissions/devices are available."
+        "On a fresh load where the user is prompted for camera permission, granting permission results in a visible live camera preview within 5 seconds on supported browsers/devices.",
+        "After permission is granted, the UI does not continue to display messaging that implies permission is still required (e.g., 'Please allow camera access') unless permission is actually denied/unavailable.",
+        "If camera startup fails after permission is granted, the app shows an actionable English error state (with Retry) instead of staying indefinitely on a loading screen."
       ]
     },
     {
-      "id": "REQ-13",
-      "text": "Ensure the manual user-gesture fallback to start the camera is triggered consistently when automatic startup does not complete promptly, and that the fallback action successfully starts the camera when tapped.",
+      "id": "REQ-16",
+      "text": "Improve camera permission-state detection and messaging so the app distinguishes between: (1) permission not yet requested, (2) permission denied/blocked, and (3) permission granted but camera stream failed/blank; ensure each case shows a correct, English, actionable message.",
       "target": "frontend",
       "source": {
         "messageIds": [
           "msg-6"
         ],
         "quotes": [
-          "The camera doesn't even start"
+          "I allowed camera access but the camera isn't showing anything and It says I need to enable camera perms"
         ]
       },
       "acceptanceCriteria": [
-        "If the camera has not become active shortly after startup attempt, a full-screen fallback UI is shown with a single large \"Start Camera\" action (as implemented by CameraStartupFallback).",
-        "Tapping the fallback \"Start Camera\" button performs a user-gesture camera start attempt and, on success, shows the live camera preview.",
-        "Fallback and retry flows do not create an infinite loop of retries; after configured retries, the user always has an actionable next step (Start Camera, Retry Camera Access, or a specific error message)."
+        "When permission is denied/blocked, the error state message explicitly says access is denied/blocked and instructs the user to change browser settings, and the screen includes a Retry action.",
+        "When permission is granted but the stream cannot be started or remains blank, the message does not instruct the user to enable permissions; it instructs retry/closing other apps or similar actionable steps appropriate to the detected failure.",
+        "The loading state copy is only shown while a permission prompt is expected or while an in-progress startup attempt is running (not indefinitely)."
       ]
     },
     {
-      "id": "REQ-14",
-      "text": "Improve camera error detection and user guidance so that when camera startup fails, the UI surfaces a specific, English, actionable message (e.g., HTTPS required, permission denied, no camera found, camera in use) rather than only showing a generic loading state.",
+      "id": "REQ-17",
+      "text": "Add a blank-preview watchdog: when the camera is reported as active but the <video> element does not begin rendering frames (e.g., videoWidth/videoHeight stay 0 or no 'playing' state) within a short timeout, automatically attempt a controlled restart of the camera stream once, and if it still fails, surface a clear error state with Retry.",
       "target": "frontend",
       "source": {
         "messageIds": [
           "msg-6"
         ],
         "quotes": [
-          "The camera doesn't even start"
+          "the camera isn't showing anything"
         ]
       },
       "acceptanceCriteria": [
-        "If window.isSecureContext is false, show the existing HTTPS-required message and do not keep retrying indefinitely.",
-        "If permission is denied, show an explicit permission-denied message and present a working \"Retry Camera Access\" button.",
-        "If the camera is in use (NotReadableError/in-use), show the existing in-use guidance and present a working \"Retry Camera Access\" button.",
-        "All user-facing error and status text remains in English."
+        "If the preview is blank after startup, the app performs at most one automatic restart attempt and announces an appropriate status update via the existing status announcement mechanism.",
+        "If the preview remains blank after the automatic restart attempt, the app shows a 'Camera Error' screen with an English actionable message and a Retry button.",
+        "Tapping Retry after a blank-preview failure triggers a fresh camera start attempt and clears the prior error UI when a preview becomes visible."
+      ]
+    },
+    {
+      "id": "REQ-18",
+      "text": "Ensure the manual 'Start Camera' fallback is triggered consistently not only when startup is delayed, but also when startup fails silently (no explicit error) after permission was granted; the fallback must successfully start the camera when tapped.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-6",
+          "msg-10"
+        ],
+        "quotes": [
+          "I allowed camera access but the camera isn't showing anything and It says I need to enable camera perms",
+          "Yea"
+        ]
+      },
+      "acceptanceCriteria": [
+        "If automatic startup does not result in a visible preview and no explicit error is produced, the full-screen manual start fallback appears within 3 seconds.",
+        "Tapping the fallback 'Start Camera' initiates a camera start attempt and either results in a visible preview or produces an actionable error state (not an indefinite loading state).",
+        "Screen-reader announcements reflect the transition into the fallback state and the result of tapping 'Start Camera'."
       ]
     }
   ],
   "constraints": [
-    "Frontend immutable paths must not be edited: frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useInternetIdentity.tsx, frontend/src/hooks/useActor.ts, frontend/src/main.tsx, frontend/src/components/ui.",
-    "Backend remains single-actor; do not introduce additional backend services or external databases.",
-    "Do not send captured images or recognized text to the backend (on-device only)."
+    "Do not modify any files under frontend/src/components/ui (read-only UI primitives).",
+    "Do not modify frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useActor.ts, or frontend/src/main.tsx (immutable paths).",
+    "Keep all backend logic within the single Motoko actor in backend/main.mo; do not add additional backend services."
   ],
   "nonGoals": [
-    "Adding new authentication methods beyond Internet Identity.",
-    "Implementing real-time communication (WebSockets) or push notifications.",
-    "Changing the core OCR-to-speech flow beyond what is necessary to fix camera startup reliability."
+    "Adding new backend features or persisting images/text to the backend.",
+    "Adding new authentication flows beyond the existing Internet Identity integration.",
+    "Introducing real-time communication features (e.g., WebSockets) or third-party camera/vision SDK integrations."
   ],
   "imageRequirements": {
     "required": [],
     "edits": []
+  },
+  "userProfileUpdate": {
+    "goalsToAdd": [],
+    "goalsToRemove": [],
+    "preferencesToAdd": [],
+    "preferencesToRemove": [],
+    "miscToAdd": [],
+    "miscToRemove": [],
+    "fieldsToSet": {},
+    "fieldsToDelete": []
   }
 }

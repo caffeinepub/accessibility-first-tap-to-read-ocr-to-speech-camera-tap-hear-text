@@ -1,7 +1,7 @@
 {
   "frontend/src/App.tsx": "Main app component that renders the single CameraReaderScreen with no routing or navigation.",
   "frontend/src/screens/CameraReaderScreen.tsx": "Primary screen orchestrating camera capture, OCR processing, TTS playback, and accessibility features with full-screen camera view, tap-to-capture interaction, and camera status change announcements via LiveAnnouncer.",
-  "frontend/src/components/CameraPreview.tsx": "Camera preview component with deterministic startup flow, single-attempt initialization with watchdog timer, proper concurrent-start guards, actionable error states with retry capability, and visibility-change resume handling.",
+  "frontend/src/components/CameraPreview.tsx": "Camera preview component with enhanced permission-state detection, blank-preview watchdog that performs one automatic restart attempt, improved error messaging based on permission state (handling timeout errors in the unknown case), and actionable retry flows with proper screen-reader announcements.",
   "frontend/src/components/PlaybackControls.tsx": "Large, accessible playback control buttons (Pause/Resume, Repeat, Speed Up, Slow Down) with explicit ARIA labels and minimum 60px height for touch targets.",
   "frontend/src/components/LiveAnnouncer.tsx": "ARIA live region component for announcing status changes to screen readers with configurable politeness levels.",
   "frontend/src/components/AudioStateCue.tsx": "Helper component that maps processing states to user-friendly messages for audio feedback.",
@@ -14,5 +14,6 @@
   "frontend/src/hooks/useQueries.ts": "Placeholder file for React Query hooks (unused as app is fully client-side with no backend queries).",
   "frontend/src/index.css": "Global styles with high-contrast warm amber/grayscale OKLCH color system, accessibility utilities (sr-only, focus indicators), and minimum touch target sizes.",
   "frontend/package.json": "Package configuration with tesseract.js dependency added for on-device OCR functionality.",
-  "frontend/src/components/CameraStartupFallback.tsx": "Full-screen accessible fallback overlay with a clear CTA button to manually start the camera when automatic startup doesn't complete within the timeout period."
+  "frontend/src/components/CameraStartupFallback.tsx": "Full-screen accessible fallback overlay with updated messaging for silent startup failures and blank preview scenarios, providing a clear manual start CTA with keyboard support.",
+  "frontend/src/hooks/useCameraPermission.ts": "Hook that detects camera permission state using the Permissions API when available with safe fallbacks, exposing normalized states (unknown/prompt/granted/denied/unavailable) for UI messaging."
 }

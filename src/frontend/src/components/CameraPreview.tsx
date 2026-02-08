@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { useCamera } from '../camera/useCamera';
 import { Button } from './ui/button';
 import CameraStartupFallback from './CameraStartupFallback';
+import { useCameraPermission } from '../hooks/useCameraPermission';
 
 interface CameraPreviewProps {
   onCapture: (imageFile: File) => void;
@@ -28,6 +29,7 @@ export default function CameraPreview({ onCapture, isProcessing, onStatusChange 
     format: 'image/jpeg',
   });
 
+  const { permissionState, checkPermission } = useCameraPermission();
   const containerRef = useRef<HTMLDivElement>(null);
   const [showFallback, setShowFallback] = useState(false);
   const [userFriendlyError, setUserFriendlyError] = useState<string>('');
@@ -35,6 +37,9 @@ export default function CameraPreview({ onCapture, isProcessing, onStatusChange 
   const isStartingRef = useRef(false);
   const startupTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const hasShownFallbackRef = useRef(false);
+  const blankPreviewTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const hasAttemptedRestartRef = useRef(false);
+  const [isVideoRendering, setIsVideoRendering] = useState(false);
 
   // Preflight checks for secure context and API availability
   const checkPreflightRequirements = useCallback(() => {
@@ -51,13 +56,16 @@ export default function CameraPreview({ onCapture, isProcessing, onStatusChange 
     return true;
   }, [onStatusChange]);
 
-  // Map camera errors to user-friendly messages
+  // Map camera errors to user-friendly messages based on permission state
   const getUserFriendlyErrorMessage = useCallback((cameraError: typeof error): string => {
     if (!cameraError) return '';
 
     switch (cameraError.type) {
       case 'permission':
-        return 'Camera access denied. Please allow camera permission in your browser settings and tap Retry.';
+        if (permissionState === 'denied') {
+          return 'Camera access is blocked. Please enable camera permission in your browser settings and tap Retry.';
+        }
+        return 'Camera access denied. Please allow camera permission and tap Retry.';
       case 'not-supported':
         return 'Camera is not supported in your browser. Please use a modern browser like Chrome, Safari, or Firefox.';
       case 'not-found':
@@ -67,17 +75,24 @@ export default function CameraPreview({ onCapture, isProcessing, onStatusChange 
         // Check for common browser error messages
         const msg = cameraError.message.toLowerCase();
         if (msg.includes('timeout')) {
-          return 'Camera startup timed out. Please tap Retry to try again.';
+          return 'Camera startup timed out. Please close other apps using the camera and tap Retry.';
         }
         if (msg.includes('in use') || msg.includes('notreadable')) {
           return 'Camera is already in use by another app. Please close other apps using the camera and tap Retry.';
         }
         if (msg.includes('permission') || msg.includes('denied')) {
-          return 'Camera access denied. Please allow camera permission in your browser settings and tap Retry.';
+          if (permissionState === 'denied') {
+            return 'Camera access is blocked. Please enable camera permission in your browser settings and tap Retry.';
+          }
+          return 'Camera access denied. Please allow camera permission and tap Retry.';
+        }
+        // For granted permission but stream failed
+        if (permissionState === 'granted') {
+          return 'Camera failed to start. Please close other apps using the camera and tap Retry.';
         }
         return `Camera error: ${cameraError.message}. Please tap Retry.`;
     }
-  }, []);
+  }, [permissionState]);
 
   // Attempt to start camera (single attempt, no recursion)
   const attemptStart = useCallback(async () => {
@@ -95,6 +110,8 @@ export default function CameraPreview({ onCapture, isProcessing, onStatusChange 
     setShowFallback(false);
     setUserFriendlyError('');
     hasShownFallbackRef.current = false;
+    hasAttemptedRestartRef.current = false;
+    setIsVideoRendering(false);
 
     onStatusChange?.('Starting camera...');
 
@@ -108,15 +125,19 @@ export default function CameraPreview({ onCapture, isProcessing, onStatusChange 
         clearTimeout(startupTimeoutRef.current);
         startupTimeoutRef.current = null;
       }
+      // Check permission state after successful start
+      checkPermission();
     } else {
       onStatusChange?.('Camera startup failed');
     }
-  }, [startCamera, checkPreflightRequirements, onStatusChange]);
+  }, [startCamera, checkPreflightRequirements, onStatusChange, checkPermission]);
 
   // Handle retry button click
   const handleRetry = useCallback(async () => {
     setUserFriendlyError('');
     isStartingRef.current = false;
+    hasAttemptedRestartRef.current = false;
+    setIsVideoRendering(false);
     onStatusChange?.('Retrying camera access...');
     
     const success = await retry();
@@ -126,16 +147,20 @@ export default function CameraPreview({ onCapture, isProcessing, onStatusChange 
         clearTimeout(startupTimeoutRef.current);
         startupTimeoutRef.current = null;
       }
+      checkPermission();
     }
-  }, [retry, onStatusChange]);
+  }, [retry, onStatusChange, checkPermission]);
 
   // Handle fallback CTA
   const handleFallbackStart = useCallback(async () => {
     setShowFallback(false);
     hasShownFallbackRef.current = false;
     isStartingRef.current = false;
+    hasAttemptedRestartRef.current = false;
+    setIsVideoRendering(false);
+    onStatusChange?.('Starting camera...');
     await attemptStart();
-  }, [attemptStart]);
+  }, [attemptStart, onStatusChange]);
 
   // Initial startup - only once
   useEffect(() => {
@@ -147,7 +172,7 @@ export default function CameraPreview({ onCapture, isProcessing, onStatusChange 
   // Startup watchdog: show fallback if camera doesn't start within timeout
   useEffect(() => {
     // Arm watchdog when we've attempted start but camera is not active and no error
-    if (hasAttemptedStartRef.current && !isActive && !error && !hasShownFallbackRef.current) {
+    if (hasAttemptedStartRef.current && !isActive && !error && !hasShownFallbackRef.current && !isStartingRef.current) {
       // Clear any existing timeout
       if (startupTimeoutRef.current) {
         clearTimeout(startupTimeoutRef.current);
@@ -170,6 +195,72 @@ export default function CameraPreview({ onCapture, isProcessing, onStatusChange 
       };
     }
   }, [isActive, error, onStatusChange]);
+
+  // Blank preview watchdog: detect when camera is active but video never renders frames
+  useEffect(() => {
+    if (isActive && videoRef.current && !isVideoRendering) {
+      const video = videoRef.current;
+      
+      const checkVideoRendering = () => {
+        // Check if video has dimensions and is playing
+        if (video.videoWidth > 0 && video.videoHeight > 0 && video.readyState >= 2) {
+          setIsVideoRendering(true);
+          onStatusChange?.('Camera ready. Tap anywhere to capture and read text.');
+          // Clear blank preview timeout
+          if (blankPreviewTimeoutRef.current) {
+            clearTimeout(blankPreviewTimeoutRef.current);
+            blankPreviewTimeoutRef.current = null;
+          }
+        }
+      };
+
+      video.addEventListener('loadeddata', checkVideoRendering);
+      video.addEventListener('playing', checkVideoRendering);
+      video.addEventListener('loadedmetadata', checkVideoRendering);
+      
+      // Check immediately in case already loaded
+      checkVideoRendering();
+
+      // Set timeout to detect blank preview
+      if (blankPreviewTimeoutRef.current) {
+        clearTimeout(blankPreviewTimeoutRef.current);
+      }
+
+      blankPreviewTimeoutRef.current = setTimeout(() => {
+        if (!isVideoRendering && isActive) {
+          // Video is active but not rendering - attempt one restart
+          if (!hasAttemptedRestartRef.current) {
+            hasAttemptedRestartRef.current = true;
+            onStatusChange?.('Camera preview blank. Attempting restart...');
+            
+            // Perform controlled restart
+            retry().then((success) => {
+              if (success) {
+                onStatusChange?.('Camera restarted successfully');
+              } else {
+                // Still blank after restart - show error
+                setUserFriendlyError('Camera preview is blank. Please close other apps using the camera and tap Retry.');
+                onStatusChange?.('Camera Error: Preview is blank after restart.');
+              }
+            });
+          } else {
+            // Already attempted restart, show error
+            setUserFriendlyError('Camera preview is blank. Please close other apps using the camera and tap Retry.');
+            onStatusChange?.('Camera Error: Preview remains blank.');
+          }
+        }
+      }, 5000); // 5 seconds to detect blank preview
+
+      return () => {
+        video.removeEventListener('loadeddata', checkVideoRendering);
+        video.removeEventListener('playing', checkVideoRendering);
+        video.removeEventListener('loadedmetadata', checkVideoRendering);
+        if (blankPreviewTimeoutRef.current) {
+          clearTimeout(blankPreviewTimeoutRef.current);
+        }
+      };
+    }
+  }, [isActive, videoRef, isVideoRendering, retry, onStatusChange]);
 
   // Handle page visibility changes (resume when returning to tab)
   useEffect(() => {
@@ -198,35 +289,15 @@ export default function CameraPreview({ onCapture, isProcessing, onStatusChange 
         clearTimeout(startupTimeoutRef.current);
         startupTimeoutRef.current = null;
       }
+      if (blankPreviewTimeoutRef.current) {
+        clearTimeout(blankPreviewTimeoutRef.current);
+        blankPreviewTimeoutRef.current = null;
+      }
     }
   }, [error, getUserFriendlyErrorMessage, onStatusChange]);
 
-  // Verify video is actually playing
-  useEffect(() => {
-    if (isActive && videoRef.current) {
-      const video = videoRef.current;
-      
-      const checkPlayback = () => {
-        if (video.readyState >= 2) { // HAVE_CURRENT_DATA or better
-          onStatusChange?.('Camera ready. Tap anywhere to capture and read text.');
-        }
-      };
-
-      video.addEventListener('loadeddata', checkPlayback);
-      video.addEventListener('playing', checkPlayback);
-      
-      // Check immediately in case already loaded
-      checkPlayback();
-
-      return () => {
-        video.removeEventListener('loadeddata', checkPlayback);
-        video.removeEventListener('playing', checkPlayback);
-      };
-    }
-  }, [isActive, videoRef, onStatusChange]);
-
   const handleTapToCapture = async () => {
-    if (!isActive || isProcessing) return;
+    if (!isActive || isProcessing || !isVideoRendering) return;
 
     const photo = await capturePhoto();
     if (photo) {
@@ -291,18 +362,27 @@ export default function CameraPreview({ onCapture, isProcessing, onStatusChange 
     );
   }
 
-  // Show fallback CTA if camera hasn't started after timeout
-  if (showFallback) {
+  // Show fallback CTA if camera hasn't started after timeout or silent failure
+  if (showFallback || (hasAttemptedStartRef.current && !isActive && !error && !isLoading && !isStartingRef.current && hasShownFallbackRef.current)) {
     return <CameraStartupFallback onStartCamera={handleFallbackStart} isLoading={isLoading} />;
   }
 
-  // Loading state
-  if (isLoading || !isActive) {
+  // Loading state - show appropriate message based on permission state
+  if (isLoading || !isActive || isStartingRef.current) {
+    let loadingMessage = 'Starting Camera...';
+    let subMessage = 'Please wait';
+
+    if (permissionState === 'prompt' || permissionState === 'unknown') {
+      subMessage = 'Please allow camera access when prompted';
+    } else if (permissionState === 'granted') {
+      subMessage = 'Initializing camera...';
+    }
+
     return (
       <div className="flex h-full items-center justify-center bg-background">
         <div className="text-center">
-          <div className="mb-4 text-2xl font-medium text-foreground">Starting Camera...</div>
-          <p className="text-lg text-muted-foreground">Please allow camera access</p>
+          <div className="mb-4 text-2xl font-medium text-foreground">{loadingMessage}</div>
+          <p className="text-lg text-muted-foreground">{subMessage}</p>
         </div>
       </div>
     );
@@ -318,7 +398,7 @@ export default function CameraPreview({ onCapture, isProcessing, onStatusChange 
       role="button"
       tabIndex={0}
       aria-label="Tap anywhere to capture image and read text. Camera preview active."
-      aria-disabled={isProcessing}
+      aria-disabled={isProcessing || !isVideoRendering}
     >
       {/* Video preview with explicit dimensions */}
       <div className="h-full w-full" style={{ minHeight: '100%' }}>
@@ -335,10 +415,21 @@ export default function CameraPreview({ onCapture, isProcessing, onStatusChange 
       {/* Hidden canvas for capture */}
       <canvas ref={canvasRef} className="hidden" aria-hidden="true" />
 
-      {/* Visual instruction overlay */}
-      <div className="pointer-events-none absolute inset-x-0 top-0 bg-gradient-to-b from-background/80 to-transparent p-6 text-center">
-        <p className="text-lg font-medium text-foreground">Tap anywhere to capture and read text</p>
-      </div>
+      {/* Visual instruction overlay - only show when video is rendering */}
+      {isVideoRendering && (
+        <div className="pointer-events-none absolute inset-x-0 top-0 bg-gradient-to-b from-background/80 to-transparent p-6 text-center">
+          <p className="text-lg font-medium text-foreground">Tap anywhere to capture and read text</p>
+        </div>
+      )}
+
+      {/* Loading overlay while video initializes */}
+      {!isVideoRendering && (
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-background/50">
+          <div className="text-center">
+            <div className="text-lg font-medium text-foreground">Initializing preview...</div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

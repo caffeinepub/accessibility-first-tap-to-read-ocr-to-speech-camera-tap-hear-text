@@ -25,8 +25,10 @@ export default function CameraStartupFallback({ onStartCamera, isLoading }: Came
           <Camera className="h-16 w-16 text-primary" aria-hidden="true" />
         </div>
         <div>
-          <h2 className="mb-2 text-2xl font-bold text-foreground">Camera Ready</h2>
-          <p className="text-lg text-muted-foreground">Tap to start the camera</p>
+          <h2 className="mb-2 text-2xl font-bold text-foreground">Camera Startup</h2>
+          <p className="text-lg text-muted-foreground">
+            The camera didn't start automatically. Tap below to start it manually.
+          </p>
         </div>
         <Button
           onClick={onStartCamera}
@@ -34,7 +36,7 @@ export default function CameraStartupFallback({ onStartCamera, isLoading }: Came
           size="lg"
           disabled={isLoading}
           className="min-h-[60px] min-w-[240px] text-lg font-semibold"
-          aria-label="Tap to start camera"
+          aria-label="Start camera manually"
         >
           {isLoading ? 'Starting...' : 'Start Camera'}
         </Button>

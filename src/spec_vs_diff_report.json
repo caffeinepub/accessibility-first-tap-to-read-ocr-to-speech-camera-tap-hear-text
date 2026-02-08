@@ -1,14 +1,42 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-08T02:16:37.427Z",
-  "summary": "Changes focus on improving frontend camera startup reliability and user guidance primarily via updates to `frontend/src/components/CameraPreview.tsx`, including secure-context/API preflight checks, concurrency guards for startup attempts, watchdog/timeout infrastructure, fallback overlay integration, and more specific user-facing error messaging. Supporting documentation/state files were also updated.",
-  "missing_requirements": [],
+  "generatedAt": "2026-02-08T02:24:42.120Z",
+  "summary": "Diff adds a new `useCameraPermission` hook and updates `CameraPreview` and `CameraStartupFallback` toward improved permission-state handling, user-friendly messaging, and blank-preview/startup fallback handling. However, due to truncation of `CameraPreview.tsx`, several acceptance-criteria behaviors (timing, one-time restart limit, and screen-reader/status announcements for watchdog/fallback transitions) cannot be fully verified from the provided diff summary.",
+  "missing_requirements": [
+    {
+      "id": "REQ-17",
+      "requirement": "Announce an appropriate status update via the existing status announcement mechanism when the blank-preview watchdog triggers an automatic restart attempt, and ensure at most one automatic restart attempt.",
+      "reason": "The diff shows state/refs suggesting a watchdog and single restart attempt (`blankPreviewTimeoutRef`, `hasAttemptedRestartRef`, `isVideoRendering`), but the truncated `CameraPreview.tsx` does not include the actual watchdog logic, the single-restart enforcement, or any `onStatusChange` calls tied to the watchdog/restart attempt.",
+      "evidence": [
+        "frontend/src/components/CameraPreview.tsx"
+      ]
+    },
+    {
+      "id": "REQ-18",
+      "requirement": "Ensure the manual 'Start Camera' fallback appears within 3 seconds when automatic startup fails silently after permission was granted, and provide screen-reader announcements reflecting transition into fallback and the result of tapping 'Start Camera'.",
+      "reason": "`CameraPreview.tsx` includes refs that imply timeout-based fallback control (`startupTimeoutRef`, `hasShownFallbackRef`, `showFallback`), and `CameraStartupFallback` provides the UI/CTA, but the provided truncated snippet does not show the 3-second timing behavior nor any explicit announcements for entering the fallback state or after tapping Start Camera.",
+      "evidence": [
+        "frontend/src/components/CameraPreview.tsx",
+        "frontend/src/components/CameraStartupFallback.tsx"
+      ]
+    },
+    {
+      "id": "REQ-15",
+      "requirement": "If camera startup fails after permission is granted, show an actionable English error state (with Retry) instead of staying indefinitely on a loading screen.",
+      "reason": "While `CameraPreview.tsx` clearly adds more user-friendly error mapping (including special handling when `permissionState === 'granted'`), the truncated diff does not show the final rendered error UI state, whether it includes a Retry action, or whether loading is prevented from persisting indefinitely after a post-grant failure.",
+      "evidence": [
+        "frontend/src/components/CameraPreview.tsx"
+      ]
+    }
+  ],
   "hallucinated_features": [],
-  "confidence": 0.66,
+  "confidence": 0.46,
   "changed_files": [
     "frontend-file-summaries.txt",
     "frontend/src/components/CameraPreview.tsx",
+    "frontend/src/components/CameraStartupFallback.tsx",
+    "frontend/src/hooks/useCameraPermission.ts",
     "project_state.json"
   ]
 }

@@ -1,47 +1,63 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-08T02:16:37.429Z",
+  "generatedAt": "2026-02-08T02:24:42.123Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 3,
-    "implemented": 3,
+    "total": 4,
+    "implemented": 4,
     "items": [
       {
-        "id": "REQ-12",
-        "summary": "Fix the camera startup flow so the live camera preview reliably starts on initial load (on supported devices/browsers) instead of staying stuck on the loading screen.",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/components/CameraPreview.tsx"
-        ],
-        "matchedFiles": [
-          "frontend/src/components/CameraPreview.tsx"
-        ]
-      },
-      {
-        "id": "REQ-13",
-        "summary": "Ensure the manual user-gesture fallback to start the camera is triggered consistently when automatic startup does not complete promptly, and that the fallback action successfully starts the camera when tapped.",
+        "id": "REQ-15",
+        "summary": "Fix the camera startup flow so that after the user grants camera permission, the app reliably transitions from the \"Starting Camera... / Please allow camera access\" loading UI to an active live preview, rather than remaining blank or continuing to imply permissions are not enabled.",
         "status": "implemented",
         "plannedFiles": [
           "frontend/src/components/CameraPreview.tsx",
           "frontend/src/components/CameraStartupFallback.tsx"
         ],
         "matchedFiles": [
+          "frontend/src/components/CameraPreview.tsx",
+          "frontend/src/components/CameraStartupFallback.tsx"
+        ]
+      },
+      {
+        "id": "REQ-16",
+        "summary": "Improve camera permission-state detection and messaging so the app distinguishes between: (1) permission not yet requested, (2) permission denied/blocked, and (3) permission granted but camera stream failed/blank; ensure each case shows a correct, English, actionable message.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/hooks/useCameraPermission.ts",
+          "frontend/src/components/CameraPreview.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/hooks/useCameraPermission.ts",
           "frontend/src/components/CameraPreview.tsx"
         ]
       },
       {
-        "id": "REQ-14",
-        "summary": "Improve camera error detection and user guidance so that when camera startup fails, the UI surfaces a specific, English, actionable message (e.g., HTTPS required, permission denied, no camera found, camera in use) rather than only showing a generic loading state.",
+        "id": "REQ-17",
+        "summary": "Add a blank-preview watchdog: when the camera is reported as active but the <video> element does not begin rendering frames (e.g., videoWidth/videoHeight stay 0 or no 'playing' state) within a short timeout, automatically attempt a controlled restart of the camera stream once, and if it still fails, surface a clear error state with Retry.",
         "status": "implemented",
         "plannedFiles": [
           "frontend/src/components/CameraPreview.tsx"
         ],
         "matchedFiles": [
           "frontend/src/components/CameraPreview.tsx"
+        ]
+      },
+      {
+        "id": "REQ-18",
+        "summary": "Ensure the manual 'Start Camera' fallback is triggered consistently not only when startup is delayed, but also when startup fails silently (no explicit error) after permission was granted; the fallback must successfully start the camera when tapped.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/components/CameraPreview.tsx",
+          "frontend/src/components/CameraStartupFallback.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/components/CameraPreview.tsx",
+          "frontend/src/components/CameraStartupFallback.tsx"
         ]
       }
     ]
@@ -52,6 +68,8 @@
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
     "frontend/src/components/CameraPreview.tsx",
+    "frontend/src/components/CameraStartupFallback.tsx",
+    "frontend/src/hooks/useCameraPermission.ts",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

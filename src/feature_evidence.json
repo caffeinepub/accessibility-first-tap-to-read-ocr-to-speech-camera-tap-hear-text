@@ -2,10 +2,11 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-fix-the-camera-startup-flow-so-the-live-camera-preview-reliably-starts-on-initial-load-on-supported-devices-browsers-instead-of-staying-stuck-on-the-loading-screen",
-      "featureTitle": "Fix the camera startup flow so the live camera preview reliably starts on initial load (on supported devices/browsers) instead of staying stuck on the loading screen.",
+      "featureId": "feature-fix-the-camera-startup-flow-so-that-after-the-user-grants-camera-permission-the-app-reliably-transitions-from-the-starting-camera-please-allow-camera-access-loading-ui-to-an-active-live-preview-rather-than-remaining-blank-or-continuing-to-imply-permissions-are-not-enabled",
+      "featureTitle": "Fix the camera startup flow so that after the user grants camera permission, the app reliably transitions from the \"Starting Camera... / Please allow camera access\" loading UI to an active live preview, rather than remaining blank or continuing to imply permissions are not enabled.",
       "files": [
-        "frontend/src/components/CameraPreview.tsx"
+        "frontend/src/components/CameraPreview.tsx",
+        "frontend/src/components/CameraStartupFallback.tsx"
       ],
       "components": [
         "camera@1.0.0",
@@ -16,15 +17,16 @@
         "github-export-icp-cli@1.0.0"
       ],
       "testIds": [
-        "REQ-12"
+        "REQ-15"
       ],
       "confidence": "high"
     },
     {
-      "featureId": "feature-ensure-the-manual-user-gesture-fallback-to-start-the-camera-is-triggered-consistently-when-automatic-startup-does-not-complete-promptly-and-that-the-fallback-action-successfully-starts-the-camera-when-tapped",
-      "featureTitle": "Ensure the manual user-gesture fallback to start the camera is triggered consistently when automatic startup does not complete promptly, and that the fallback action successfully starts the camera when tapped.",
+      "featureId": "feature-improve-camera-permission-state-detection-and-messaging-so-the-app-distinguishes-between-1-permission-not-yet-requested-2-permission-denied-blocked-and-3-permission-granted-but-camera-stream-failed-blank-ensure-each-case-shows-a-correct-english-actionable-message",
+      "featureTitle": "Improve camera permission-state detection and messaging so the app distinguishes between: (1) permission not yet requested, (2) permission denied/blocked, and (3) permission granted but camera stream failed/blank; ensure each case shows a correct, English, actionable message.",
       "files": [
-        "frontend/src/components/CameraPreview.tsx"
+        "frontend/src/components/CameraPreview.tsx",
+        "frontend/src/hooks/useCameraPermission.ts"
       ],
       "components": [
         "camera@1.0.0",
@@ -35,13 +37,13 @@
         "github-export-icp-cli@1.0.0"
       ],
       "testIds": [
-        "REQ-13"
+        "REQ-16"
       ],
       "confidence": "high"
     },
     {
-      "featureId": "feature-improve-camera-error-detection-and-user-guidance-so-that-when-camera-startup-fails-the-ui-surfaces-a-specific-english-actionable-message-e-g-https-required-permission-denied-no-camera-found-camera-in-use-rather-than-only-showing-a-generic-loading-state",
-      "featureTitle": "Improve camera error detection and user guidance so that when camera startup fails, the UI surfaces a specific, English, actionable message (e.g., HTTPS required, permission denied, no camera found, camera in use) rather than only showing a generic loading state.",
+      "featureId": "feature-add-a-blank-preview-watchdog-when-the-camera-is-reported-as-active-but-the-video-element-does-not-begin-rendering-frames-e-g-videowidth-videoheight-stay-0-or-no-playing-state-within-a-short-timeout-automatically-attempt-a-controlled-restart-of-the-camera-stream-once-and-if-it-still-fails-surface-a-clear-error-state-with-retry",
+      "featureTitle": "Add a blank-preview watchdog: when the camera is reported as active but the <video> element does not begin rendering frames (e.g., videoWidth/videoHeight stay 0 or no 'playing' state) within a short timeout, automatically attempt a controlled restart of the camera stream once, and if it still fails, surface a clear error state with Retry.",
       "files": [
         "frontend/src/components/CameraPreview.tsx"
       ],
@@ -54,7 +56,27 @@
         "github-export-icp-cli@1.0.0"
       ],
       "testIds": [
-        "REQ-14"
+        "REQ-17"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-ensure-the-manual-start-camera-fallback-is-triggered-consistently-not-only-when-startup-is-delayed-but-also-when-startup-fails-silently-no-explicit-error-after-permission-was-granted-the-fallback-must-successfully-start-the-camera-when-tapped",
+      "featureTitle": "Ensure the manual 'Start Camera' fallback is triggered consistently not only when startup is delayed, but also when startup fails silently (no explicit error) after permission was granted; the fallback must successfully start the camera when tapped.",
+      "files": [
+        "frontend/src/components/CameraPreview.tsx",
+        "frontend/src/components/CameraStartupFallback.tsx"
+      ],
+      "components": [
+        "camera@1.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-18"
       ],
       "confidence": "high"
     }

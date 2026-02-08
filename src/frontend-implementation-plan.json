@@ -1,59 +1,84 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Reliable camera startup with deterministic fallback and actionable error guidance",
+  "title": "Camera startup reliability: permission-state messaging, blank-preview watchdog, and consistent manual fallback",
   "requirements": [
     {
-      "id": "REQ-12",
-      "summary": "Make initial camera startup reliably transition from loading to live preview, including resume attempts on tab re-entry.",
+      "id": "REQ-15",
+      "summary": "Make camera startup reliably transition from loading to an active live preview after permission is granted, and surface a retryable error if startup fails instead of staying blank/loading.",
       "acceptanceCriteria": [
-        "On a device/browser that supports getUserMedia in a secure context (HTTPS), the camera preview transitions from \"Starting Camera...\" to a live video feed without requiring a manual reload.",
-        "If automatic startup fails, the app must not remain indefinitely in a loading state; it must transition to either a clear error screen or the manual-start fallback.",
-        "Re-entering the tab/app after backgrounding (visibilitychange to visible) triggers a camera resume attempt, and the preview starts if permissions/devices are available."
+        "On a fresh load where the user is prompted for camera permission, granting permission results in a visible live camera preview within 5 seconds on supported browsers/devices.",
+        "After permission is granted, the UI does not continue to display messaging that implies permission is still required (e.g., 'Please allow camera access') unless permission is actually denied/unavailable.",
+        "If camera startup fails after permission is granted, the app shows an actionable English error state (with Retry) instead of staying indefinitely on a loading screen."
       ],
       "file_operations": [
         {
           "path": "frontend/src/components/CameraPreview.tsx",
           "operation": "modify",
-          "description": "Refactor the startup flow into a small, explicit state machine (e.g., starting/loading vs delayed vs active) so the UI never renders an indefinite \"Starting Camera...\" screen when isLoading becomes false but the camera is still inactive. Ensure the startup watchdog is armed whenever a start is attempted (not only when isLoading is true), and that exceeding the watchdog transitions to fallback or an error state. Keep the existing visibilitychange resume attempt, but gate it to avoid overlapping/stacked start attempts. Use the selected \"camera\" component hook (useCamera) as the single integration point for starting/retrying the camera; verify the component's usage instructions before implementing."
-        }
-      ]
-    },
-    {
-      "id": "REQ-13",
-      "summary": "Ensure manual user-gesture fallback appears consistently when auto-start stalls and that tapping it reliably starts the camera without infinite retry loops.",
-      "acceptanceCriteria": [
-        "If the camera has not become active shortly after startup attempt, a full-screen fallback UI is shown with a single large \"Start Camera\" action (as implemented by CameraStartupFallback).",
-        "Tapping the fallback \"Start Camera\" button performs a user-gesture camera start attempt and, on success, shows the live camera preview.",
-        "Fallback and retry flows do not create an infinite loop of retries; after configured retries, the user always has an actionable next step (Start Camera, Retry Camera Access, or a specific error message)."
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/components/CameraPreview.tsx",
-          "operation": "modify",
-          "description": "Make fallback triggering deterministic: after a single auto-start attempt (and any bounded internal retries), if the camera is still not active within the configured timeout, transition to CameraStartupFallback. Ensure the fallback button triggers a gesture-based start attempt (calling the camera hook's start/retry capabilities) and on success clears fallback/error and shows the preview. Add guards to prevent recursive attemptStart loops and prevent multiple concurrent attempts (e.g., an in-flight flag). Use the selected \"camera\" component hook (useCamera) and the existing CameraStartupFallback component; verify the component's usage instructions before implementing."
+          "description": "Harden the startup state machine around the existing camera component hook (use the selected \"camera\" component’s `useCamera` hook for start/retry/refs; Verify the component's usage instructions before implementing). Ensure the loading UI transitions to preview-ready when the video actually starts rendering frames (not merely when `isActive` flips), and add bounded timeouts so the UI cannot remain indefinitely in 'Starting Camera…' after permission grant; instead transition to fallback and/or a retryable error state."
         },
         {
           "path": "frontend/src/components/CameraStartupFallback.tsx",
           "operation": "modify",
-          "description": "Align copy and accessibility to match the fallback intent (single prominent \"Start Camera\" action, clear instruction text), and ensure the CTA remains the only primary action in this view. Keep all user-facing text in English. Verify any related selected component usage instructions before implementing."
+          "description": "Adjust fallback copy to reflect the real scenario (e.g., blank/failed preview after permission grant) and ensure the fallback CTA consistently triggers a fresh start attempt via parent. Keep messaging English and actionable; Verify the component's usage instructions before implementing."
         }
       ]
     },
     {
-      "id": "REQ-14",
-      "summary": "Improve error detection and surface specific, actionable English guidance for common camera startup failures (HTTPS, permission denied, in-use).",
+      "id": "REQ-16",
+      "summary": "Improve permission-state detection and user messaging to correctly distinguish not-yet-requested vs denied/blocked vs granted-but-stream-failed/blank, with actionable English guidance and Retry.",
       "acceptanceCriteria": [
-        "If window.isSecureContext is false, show the existing HTTPS-required message and do not keep retrying indefinitely.",
-        "If permission is denied, show an explicit permission-denied message and present a working \"Retry Camera Access\" button.",
-        "If the camera is in use (NotReadableError/in-use), show the existing in-use guidance and present a working \"Retry Camera Access\" button.",
-        "All user-facing error and status text remains in English."
+        "When permission is denied/blocked, the error state message explicitly says access is denied/blocked and instructs the user to change browser settings, and the screen includes a Retry action.",
+        "When permission is granted but the stream cannot be started or remains blank, the message does not instruct the user to enable permissions; it instructs retry/closing other apps or similar actionable steps appropriate to the detected failure.",
+        "The loading state copy is only shown while a permission prompt is expected or while an in-progress startup attempt is running (not indefinitely)."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/hooks/useCameraPermission.ts",
+          "operation": "create",
+          "description": "Create a small hook that reads best-effort camera permission state (using the Permissions API when available, with safe fallbacks when not supported) and exposes a normalized state for UI messaging (e.g., unknown/prompt/granted/denied/unavailable)."
+        },
+        {
+          "path": "frontend/src/components/CameraPreview.tsx",
+          "operation": "modify",
+          "description": "Integrate the new permission-state hook to drive correct loading/error copy: (1) not requested/prompting, (2) denied/blocked (settings guidance + Retry), (3) granted but stream failed/blank (do not mention enabling permission; provide actionable retry/close-other-apps guidance). Continue using the selected \"camera\" component’s `useCamera` hook for camera operations; Verify the component's usage instructions before implementing."
+        }
+      ]
+    },
+    {
+      "id": "REQ-17",
+      "summary": "Add a blank-preview watchdog that detects when the camera is active but the video never renders frames, performs one controlled restart attempt with announcement, then shows a clear retryable error if still blank.",
+      "acceptanceCriteria": [
+        "If the preview is blank after startup, the app performs at most one automatic restart attempt and announces an appropriate status update via the existing status announcement mechanism.",
+        "If the preview remains blank after the automatic restart attempt, the app shows a 'Camera Error' screen with an English actionable message and a Retry button.",
+        "Tapping Retry after a blank-preview failure triggers a fresh camera start attempt and clears the prior error UI when a preview becomes visible."
       ],
       "file_operations": [
         {
           "path": "frontend/src/components/CameraPreview.tsx",
           "operation": "modify",
-          "description": "Tighten preflight + error mapping so failures consistently render an actionable error screen instead of falling through to loading. Specifically: (1) treat non-secure context as a terminal state (no repeated auto-retries); (2) ensure permission-denied and in-use scenarios are detected reliably (via the hook error.type plus message heuristics) and always show the \"Retry Camera Access\" button wired to the hook retry() call; (3) ensure status/error strings announced via onStatusChange remain English and are not spammed by repeated retries. Use the selected \"camera\" component hook (useCamera) for error information and retry capability; verify the component's usage instructions before implementing."
+          "description": "Implement a video-render watchdog tied to the `<video>` element (e.g., wait for 'playing' / non-zero `videoWidth`/`videoHeight` within a short timeout after camera reports active). If blank, automatically perform exactly one controlled restart (prefer `retry()` from the selected \"camera\" hook), announce status via `onStatusChange`, then on repeated blank set a dedicated error UI state ('Camera Error' + actionable message + Retry) without looping further. Verify the component's usage instructions before implementing."
+        }
+      ]
+    },
+    {
+      "id": "REQ-18",
+      "summary": "Ensure the manual 'Start Camera' fallback appears for silent failures (including blank preview after permission grant) and reliably starts the camera when tapped with correct screen-reader announcements.",
+      "acceptanceCriteria": [
+        "If automatic startup does not result in a visible preview and no explicit error is produced, the full-screen manual start fallback appears within 3 seconds.",
+        "Tapping the fallback 'Start Camera' initiates a camera start attempt and either results in a visible preview or produces an actionable error state (not an indefinite loading state).",
+        "Screen-reader announcements reflect the transition into the fallback state and the result of tapping 'Start Camera'."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/CameraPreview.tsx",
+          "operation": "modify",
+          "description": "Extend the existing fallback trigger to account for silent failures beyond `!isActive` (including 'active-but-blank' per video watchdog). Ensure fallback appears within 3 seconds when no visible preview is detected and no explicit error exists. On fallback tap, force a fresh camera start attempt and clear fallback/error UI on success; announce transitions/results via `onStatusChange` (consumed by the existing `LiveAnnouncer`). Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/components/CameraStartupFallback.tsx",
+          "operation": "modify",
+          "description": "Ensure the fallback dialog remains fully accessible (keyboard activation and clear ARIA labeling) and that its copy matches the new silent-failure/blank-preview scenarios. Verify the component's usage instructions before implementing."
         }
       ]
     }
