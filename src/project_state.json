@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.0.0",
-  "projectStateVersion": 3,
+  "projectStateVersion": 5,
   "summary": "Android accessibility-first OCR-to-speech app: point phone, tap anywhere to scan text with on-device ML Kit OCR and read aloud via Android TTS; minimal UI, TalkBack-friendly, no accounts/cloud/subscriptions.",
   "architectural_notes": [
     "Platform: Android (Kotlin).",
@@ -9,8 +9,10 @@
     "Privacy: no accounts, no cloud, no subscriptions; process on-device.",
     "UX: accessibility-first for TalkBack; minimal UI; portrait-only."
   ],
-  "known_issues": [],
-  "isFixRequest": false,
+  "known_issues": [
+    "Camera preview sometimes fails to start (user reports: \"The camera isn't starting\")."
+  ],
+  "isFixRequest": true,
   "existing_features": [
     {
       "id": "feature-implement-a-minimal-clutter-free-single-screen-experience-that-opens-directly-to-a-live-camera-view-with-no-menus-or-small-visible-controls-on-the-first-screen",
@@ -73,6 +75,30 @@
       "title": "Apply a cohesive visual theme consistent with a blind-first, no-clutter experience: high-contrast, calm, minimal typography and layout, avoiding decorative elements that distract from the capture/read flow.",
       "reqIds": [
         "REQ-8"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-improve-camera-startup-reliability-so-the-live-camera-preview-starts-consistently-on-initial-app-load-and-after-returning-to-the-tab-app",
+      "title": "Improve camera startup reliability so the live camera preview starts consistently on initial app load and after returning to the tab/app.",
+      "reqIds": [
+        "REQ-9"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-an-accessible-user-gesture-fallback-to-start-the-camera-when-autoplay-permission-policies-prevent-starting-getusermedia-on-mount-e-g-show-a-full-screen-tap-to-start-camera-action-when-camera-startup-does-not-complete-promptly",
+      "title": "Add an accessible user-gesture fallback to start the camera when autoplay/permission policies prevent starting getUserMedia on mount (e.g., show a full-screen 'Tap to start camera' action when camera startup does not complete promptly).",
+      "reqIds": [
+        "REQ-10"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-improve-camera-error-handling-and-user-guidance-to-reduce-camera-isn-t-starting-reports-by-providing-actionable-english-error-states-for-common-failures-permission-denied-insecure-context-http-no-camera-device-camera-already-in-use",
+      "title": "Improve camera error handling and user guidance to reduce \"camera isn't starting\" reports by providing actionable, English error states for common failures (permission denied, insecure context/HTTP, no camera device, camera already in use).",
+      "reqIds": [
+        "REQ-11"
       ],
       "version": 1
     }

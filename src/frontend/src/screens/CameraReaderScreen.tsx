@@ -83,13 +83,17 @@ export default function CameraReaderScreen() {
     setAnnouncement(`Speed decreased to ${newRate.toFixed(2)}`);
   }, [rate, setRate]);
 
+  const handleCameraStatusChange = useCallback((status: string) => {
+    setAnnouncement(status);
+  }, []);
+
   if (!isPortrait) {
     return <OrientationPrompt />;
   }
 
   return (
     <div className="relative h-screen w-screen overflow-hidden bg-background">
-      <LiveAnnouncer message={announcement} />
+      <LiveAnnouncer message={announcement} politeness="assertive" />
       <AudioStateCue state={audioState} />
 
       {/* Main instruction - visible for screen readers */}
@@ -99,7 +103,11 @@ export default function CameraReaderScreen() {
 
       {/* Camera preview fills the screen */}
       <div className="absolute inset-0">
-        <CameraPreview onCapture={handleCapture} isProcessing={isProcessing} />
+        <CameraPreview 
+          onCapture={handleCapture} 
+          isProcessing={isProcessing}
+          onStatusChange={handleCameraStatusChange}
+        />
       </div>
 
       {/* Playback controls - visually hidden but accessible */}

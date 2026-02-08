@@ -1,7 +1,7 @@
 {
   "frontend/src/App.tsx": "Main app component that renders the single CameraReaderScreen with no routing or navigation.",
-  "frontend/src/screens/CameraReaderScreen.tsx": "Primary screen orchestrating camera capture, OCR processing, TTS playback, and accessibility features with full-screen camera view and tap-to-capture interaction.",
-  "frontend/src/components/CameraPreview.tsx": "Full-screen camera preview component with tap-anywhere-to-capture functionality, keyboard accessibility, and error handling using the useCamera hook.",
+  "frontend/src/screens/CameraReaderScreen.tsx": "Primary screen orchestrating camera capture, OCR processing, TTS playback, and accessibility features with full-screen camera view, tap-to-capture interaction, and camera status change announcements via LiveAnnouncer.",
+  "frontend/src/components/CameraPreview.tsx": "Enhanced camera preview component with automatic retry logic, page visibility handling, startup watchdog timer, preflight checks for secure context and API availability, user-friendly error messages with retry actions, and accessible live-region announcements for all camera states.",
   "frontend/src/components/PlaybackControls.tsx": "Large, accessible playback control buttons (Pause/Resume, Repeat, Speed Up, Slow Down) with explicit ARIA labels and minimum 60px height for touch targets.",
   "frontend/src/components/LiveAnnouncer.tsx": "ARIA live region component for announcing status changes to screen readers with configurable politeness levels.",
   "frontend/src/components/AudioStateCue.tsx": "Helper component that maps processing states to user-friendly messages for audio feedback.",
@@ -13,5 +13,6 @@
   "frontend/src/camera/useCamera.ts": "Complete camera management hook providing live preview, capture, error handling, and camera switching with proper cleanup.",
   "frontend/src/hooks/useQueries.ts": "Placeholder file for React Query hooks (unused as app is fully client-side with no backend queries).",
   "frontend/src/index.css": "Global styles with high-contrast warm amber/grayscale OKLCH color system, accessibility utilities (sr-only, focus indicators), and minimum touch target sizes.",
-  "frontend/package.json": "Package configuration with tesseract.js dependency added for on-device OCR functionality."
+  "frontend/package.json": "Package configuration with tesseract.js dependency added for on-device OCR functionality.",
+  "frontend/src/components/CameraStartupFallback.tsx": "Full-screen accessible fallback overlay with a clear CTA button to manually start the camera when automatic startup doesn't complete within the timeout period."
 }

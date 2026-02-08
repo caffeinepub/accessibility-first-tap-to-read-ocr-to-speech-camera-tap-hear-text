@@ -1,16 +1,11 @@
 # Specification
 
 ## Summary
-**Goal:** Deliver an accessibility-first, single-screen “tap anywhere to capture → on-device OCR → immediate text-to-speech” experience with minimal visual UI and robust screen reader support.
+**Goal:** Make the live camera preview start reliably on first load and after returning to the app, with clear fallback and actionable error states.
 
 **Planned changes:**
-- Build a clutter-free, full-screen live camera view as the initial and primary screen (no menus/toolbars; no tiny tap targets).
-- Enable tap-anywhere capture on the camera preview with immediate haptic feedback when supported, and an accessible audio confirmation fallback when not.
-- Run OCR automatically on each capture on-device in the client (no sending images/text to any backend; session-only state).
-- Automatically read recognized text aloud via in-browser text-to-speech, with audio feedback for capture, processing start, processing complete, and errors/empty results.
-- Provide large, screen-reader-friendly playback controls (Pause, Repeat, Speed up, Slow down) that are keyboard/switch accessible and discoverable even if visually hidden.
-- Enforce portrait-first behavior; show an accessible rotate-to-portrait prompt in landscape and announce it via screen readers.
-- Add accessibility semantics and live announcements for instructions and status updates so the full flow works without vision.
-- Apply a calm, high-contrast, minimal visual theme (avoiding blue/purple-dominant styling).
+- Improve the camera start flow to more consistently reach a playable preview on initial load, including at least one automatic retry when startup stalls.
+- Add a full-screen, accessible “Tap to start camera” user-gesture fallback when the camera does not become active within a short timeout.
+- Add clear, English, actionable error UI for common camera failures (permission denied, insecure context/HTTP, no camera device, camera already in use), including accessible announcements and a Retry action without requiring a page refresh.
 
-**User-visible outcome:** On opening the app, the user sees a full-screen camera; tapping anywhere captures text, the app announces progress, and then immediately speaks the recognized text aloud with accessible playback controls and a portrait-first experience.
+**User-visible outcome:** The camera preview appears consistently within a couple seconds when permissions are granted; if it doesn’t, users get a prominent “Tap to start camera” option, and any failures show clear guidance with a retry path instead of an endless loading state.
