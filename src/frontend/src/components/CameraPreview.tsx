@@ -31,23 +31,25 @@ export default function CameraPreview({ onCapture, isProcessing, onStatusChange 
   const containerRef = useRef<HTMLDivElement>(null);
   const [showFallback, setShowFallback] = useState(false);
   const [userFriendlyError, setUserFriendlyError] = useState<string>('');
-  const [hasAttemptedStart, setHasAttemptedStart] = useState(false);
+  const hasAttemptedStartRef = useRef(false);
+  const isStartingRef = useRef(false);
   const startupTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const retryCountRef = useRef(0);
-  const maxRetries = 2;
+  const hasShownFallbackRef = useRef(false);
 
   // Preflight checks for secure context and API availability
   const checkPreflightRequirements = useCallback(() => {
     if (!window.isSecureContext) {
       setUserFriendlyError('Camera requires HTTPS. Please access this app over a secure connection.');
+      onStatusChange?.('Camera requires HTTPS. Please access this app over a secure connection.');
       return false;
     }
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
       setUserFriendlyError('Camera is not supported in your browser. Please use a modern browser like Chrome, Safari, or Firefox.');
+      onStatusChange?.('Camera is not supported in your browser.');
       return false;
     }
     return true;
-  }, []);
+  }, [onStatusChange]);
 
   // Map camera errors to user-friendly messages
   const getUserFriendlyErrorMessage = useCallback((cameraError: typeof error): string => {
@@ -77,55 +79,75 @@ export default function CameraPreview({ onCapture, isProcessing, onStatusChange 
     }
   }, []);
 
-  // Attempt to start camera with retry logic
+  // Attempt to start camera (single attempt, no recursion)
   const attemptStart = useCallback(async () => {
+    // Prevent concurrent start attempts
+    if (isStartingRef.current) {
+      return;
+    }
+
     if (!checkPreflightRequirements()) {
       return;
     }
 
-    setHasAttemptedStart(true);
+    isStartingRef.current = true;
+    hasAttemptedStartRef.current = true;
     setShowFallback(false);
     setUserFriendlyError('');
+    hasShownFallbackRef.current = false;
+
+    onStatusChange?.('Starting camera...');
 
     const success = await startCamera();
+    isStartingRef.current = false;
     
-    if (!success && retryCountRef.current < maxRetries) {
-      retryCountRef.current += 1;
-      onStatusChange?.(`Camera startup failed, retrying (${retryCountRef.current}/${maxRetries})...`);
-      
-      // Wait a bit before retrying
-      await new Promise(resolve => setTimeout(resolve, 500));
-      await attemptStart();
+    if (success) {
+      onStatusChange?.('Camera started successfully');
+      // Clear any pending timeout
+      if (startupTimeoutRef.current) {
+        clearTimeout(startupTimeoutRef.current);
+        startupTimeoutRef.current = null;
+      }
+    } else {
+      onStatusChange?.('Camera startup failed');
     }
   }, [startCamera, checkPreflightRequirements, onStatusChange]);
 
   // Handle retry button click
   const handleRetry = useCallback(async () => {
-    retryCountRef.current = 0;
     setUserFriendlyError('');
+    isStartingRef.current = false;
     onStatusChange?.('Retrying camera access...');
     
     const success = await retry();
     if (success) {
       onStatusChange?.('Camera started successfully');
+      if (startupTimeoutRef.current) {
+        clearTimeout(startupTimeoutRef.current);
+        startupTimeoutRef.current = null;
+      }
     }
   }, [retry, onStatusChange]);
 
   // Handle fallback CTA
   const handleFallbackStart = useCallback(async () => {
     setShowFallback(false);
-    retryCountRef.current = 0;
+    hasShownFallbackRef.current = false;
+    isStartingRef.current = false;
     await attemptStart();
   }, [attemptStart]);
 
-  // Initial startup
+  // Initial startup - only once
   useEffect(() => {
-    attemptStart();
-  }, [attemptStart]);
+    if (!hasAttemptedStartRef.current) {
+      attemptStart();
+    }
+  }, []);
 
   // Startup watchdog: show fallback if camera doesn't start within timeout
   useEffect(() => {
-    if (hasAttemptedStart && !isActive && !error && isLoading) {
+    // Arm watchdog when we've attempted start but camera is not active and no error
+    if (hasAttemptedStartRef.current && !isActive && !error && !hasShownFallbackRef.current) {
       // Clear any existing timeout
       if (startupTimeoutRef.current) {
         clearTimeout(startupTimeoutRef.current);
@@ -133,11 +155,13 @@ export default function CameraPreview({ onCapture, isProcessing, onStatusChange 
 
       // Set new timeout
       startupTimeoutRef.current = setTimeout(() => {
-        if (!isActive && !error) {
+        if (!isActive && !error && !hasShownFallbackRef.current) {
           setShowFallback(true);
+          hasShownFallbackRef.current = true;
+          isStartingRef.current = false;
           onStatusChange?.('Camera startup delayed. Please tap to start manually.');
         }
-      }, 2500); // 2.5 seconds
+      }, 3000); // 3 seconds
 
       return () => {
         if (startupTimeoutRef.current) {
@@ -145,14 +169,13 @@ export default function CameraPreview({ onCapture, isProcessing, onStatusChange 
         }
       };
     }
-  }, [hasAttemptedStart, isActive, error, isLoading, onStatusChange]);
+  }, [isActive, error, onStatusChange]);
 
   // Handle page visibility changes (resume when returning to tab)
   useEffect(() => {
     const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible' && hasAttemptedStart && !isActive && !error) {
+      if (document.visibilityState === 'visible' && hasAttemptedStartRef.current && !isActive && !error && !isStartingRef.current) {
         onStatusChange?.('Resuming camera...');
-        retryCountRef.current = 0;
         attemptStart();
       }
     };
@@ -161,7 +184,7 @@ export default function CameraPreview({ onCapture, isProcessing, onStatusChange 
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [hasAttemptedStart, isActive, error, attemptStart, onStatusChange]);
+  }, [isActive, error, attemptStart, onStatusChange]);
 
   // Update user-friendly error when camera error changes
   useEffect(() => {
@@ -169,6 +192,12 @@ export default function CameraPreview({ onCapture, isProcessing, onStatusChange 
       const friendlyMessage = getUserFriendlyErrorMessage(error);
       setUserFriendlyError(friendlyMessage);
       onStatusChange?.(friendlyMessage);
+      isStartingRef.current = false;
+      // Clear watchdog on error
+      if (startupTimeoutRef.current) {
+        clearTimeout(startupTimeoutRef.current);
+        startupTimeoutRef.current = null;
+      }
     }
   }, [error, getUserFriendlyErrorMessage, onStatusChange]);
 
@@ -213,13 +242,27 @@ export default function CameraPreview({ onCapture, isProcessing, onStatusChange 
   };
 
   // Not supported
-  if (isSupported === false || userFriendlyError.includes('not supported')) {
+  if (isSupported === false || (userFriendlyError && userFriendlyError.includes('not supported'))) {
     return (
       <div className="flex h-full items-center justify-center bg-background p-8 text-center">
         <div className="max-w-md">
           <h1 className="mb-4 text-2xl font-bold text-foreground">Camera Not Supported</h1>
           <p className="text-lg text-muted-foreground">
             {userFriendlyError || 'Your browser or device does not support camera access. Please use a modern browser like Chrome, Safari, or Firefox.'}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // HTTPS required (terminal error, no retry)
+  if (userFriendlyError && userFriendlyError.includes('HTTPS')) {
+    return (
+      <div className="flex h-full items-center justify-center bg-background p-8 text-center">
+        <div className="max-w-md">
+          <h1 className="mb-4 text-2xl font-bold text-destructive">Secure Connection Required</h1>
+          <p className="text-lg text-foreground" role="alert" aria-live="assertive">
+            {userFriendlyError}
           </p>
         </div>
       </div>

@@ -1,69 +1,59 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Reliable camera preview startup with retry, resume handling, and accessible fallback",
+  "title": "Reliable camera startup with deterministic fallback and actionable error guidance",
   "requirements": [
     {
-      "id": "REQ-9",
-      "summary": "Make camera preview start reliably on first load and resume automatically after tab/app returns, with bounded retries.",
+      "id": "REQ-12",
+      "summary": "Make initial camera startup reliably transition from loading to live preview, including resume attempts on tab re-entry.",
       "acceptanceCriteria": [
-        "On supported devices/browsers with camera permission granted, the preview shows within 2 seconds in at least 10 consecutive reloads.",
-        "If the app is backgrounded and then resumed, the preview either remains active or restarts automatically without requiring a full page refresh.",
-        "If the video element fails to reach a playable state after an initial start attempt, the app performs at least one automatic retry and then transitions to a user-action fallback (see REQ-10) rather than staying indefinitely on a loading screen."
+        "On a device/browser that supports getUserMedia in a secure context (HTTPS), the camera preview transitions from \"Starting Camera...\" to a live video feed without requiring a manual reload.",
+        "If automatic startup fails, the app must not remain indefinitely in a loading state; it must transition to either a clear error screen or the manual-start fallback.",
+        "Re-entering the tab/app after backgrounding (visibilitychange to visible) triggers a camera resume attempt, and the preview starts if permissions/devices are available."
       ],
       "file_operations": [
         {
           "path": "frontend/src/components/CameraPreview.tsx",
           "operation": "modify",
-          "description": "Improve startup flow using the selected camera component’s `useCamera` hook (start + verify playable state + at least one automatic retry). Add document visibility/focus handling to re-attempt start (or resume playback) when returning to the tab/app, and ensure the UI does not remain indefinitely in a loading state. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/screens/CameraReaderScreen.tsx",
-          "operation": "modify",
-          "description": "Wire camera lifecycle status events (e.g., resumed/retrying/ready) into existing screen-level announcements so users get feedback during automatic restart attempts after returning to the tab/app."
+          "description": "Refactor the startup flow into a small, explicit state machine (e.g., starting/loading vs delayed vs active) so the UI never renders an indefinite \"Starting Camera...\" screen when isLoading becomes false but the camera is still inactive. Ensure the startup watchdog is armed whenever a start is attempted (not only when isLoading is true), and that exceeding the watchdog transitions to fallback or an error state. Keep the existing visibilitychange resume attempt, but gate it to avoid overlapping/stacked start attempts. Use the selected \"camera\" component hook (useCamera) as the single integration point for starting/retrying the camera; verify the component's usage instructions before implementing."
         }
       ]
     },
     {
-      "id": "REQ-10",
-      "summary": "Add an accessible full-screen user-gesture CTA fallback to start the camera when automatic startup does not complete promptly.",
+      "id": "REQ-13",
+      "summary": "Ensure manual user-gesture fallback appears consistently when auto-start stalls and that tapping it reliably starts the camera without infinite retry loops.",
       "acceptanceCriteria": [
-        "If the camera is not active after a short timeout (e.g., ~2–3 seconds) and no explicit error is available, a full-screen, high-contrast CTA appears allowing the user to start the camera with a tap.",
-        "The fallback CTA is keyboard operable (Enter/Space) and screen-reader discoverable with a clear English label (e.g., 'Tap to start camera').",
-        "Tapping the fallback CTA triggers the same camera start flow and, on success, the preview replaces the CTA automatically."
+        "If the camera has not become active shortly after startup attempt, a full-screen fallback UI is shown with a single large \"Start Camera\" action (as implemented by CameraStartupFallback).",
+        "Tapping the fallback \"Start Camera\" button performs a user-gesture camera start attempt and, on success, shows the live camera preview.",
+        "Fallback and retry flows do not create an infinite loop of retries; after configured retries, the user always has an actionable next step (Start Camera, Retry Camera Access, or a specific error message)."
       ],
       "file_operations": [
+        {
+          "path": "frontend/src/components/CameraPreview.tsx",
+          "operation": "modify",
+          "description": "Make fallback triggering deterministic: after a single auto-start attempt (and any bounded internal retries), if the camera is still not active within the configured timeout, transition to CameraStartupFallback. Ensure the fallback button triggers a gesture-based start attempt (calling the camera hook's start/retry capabilities) and on success clears fallback/error and shows the preview. Add guards to prevent recursive attemptStart loops and prevent multiple concurrent attempts (e.g., an in-flight flag). Use the selected \"camera\" component hook (useCamera) and the existing CameraStartupFallback component; verify the component's usage instructions before implementing."
+        },
         {
           "path": "frontend/src/components/CameraStartupFallback.tsx",
-          "operation": "create",
-          "description": "Create a full-screen, high-contrast, accessible fallback overlay with a single clear CTA ('Tap to start camera') that supports click and Enter/Space. This overlay will be used when camera startup is not confirmed within ~2–3 seconds. Use existing shadcn/ui `Button` for consistency; verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/components/CameraPreview.tsx",
           "operation": "modify",
-          "description": "Add a bounded startup watchdog (~2–3 seconds) that, when the camera isn’t confirmed playable and no explicit error is available, shows `CameraStartupFallback`. Wire the CTA to call the same start flow (`startCamera`/retry) from the selected camera component’s `useCamera` hook and hide the overlay automatically upon success. Verify the component's usage instructions before implementing."
+          "description": "Align copy and accessibility to match the fallback intent (single prominent \"Start Camera\" action, clear instruction text), and ensure the CTA remains the only primary action in this view. Keep all user-facing text in English. Verify any related selected component usage instructions before implementing."
         }
       ]
     },
     {
-      "id": "REQ-11",
-      "summary": "Provide actionable, accessible English error states and retry guidance for common camera failures without requiring page reload.",
+      "id": "REQ-14",
+      "summary": "Improve error detection and surface specific, actionable English guidance for common camera startup failures (HTTPS, permission denied, in-use).",
       "acceptanceCriteria": [
-        "When camera access is denied, the UI clearly instructs the user to allow camera permission in the browser settings and offers a Retry action.",
-        "When running in an insecure context (non-HTTPS) or when camera APIs are unavailable, the UI clearly indicates the requirement (e.g., 'Camera requires HTTPS') and does not loop endlessly on 'Starting Camera...'.",
-        "When the camera is already in use or cannot be started, the UI provides a Retry action and announces the error message through accessible live-region semantics.",
-        "No error state blocks the user from attempting to retry camera access without reloading the page."
+        "If window.isSecureContext is false, show the existing HTTPS-required message and do not keep retrying indefinitely.",
+        "If permission is denied, show an explicit permission-denied message and present a working \"Retry Camera Access\" button.",
+        "If the camera is in use (NotReadableError/in-use), show the existing in-use guidance and present a working \"Retry Camera Access\" button.",
+        "All user-facing error and status text remains in English."
       ],
       "file_operations": [
         {
           "path": "frontend/src/components/CameraPreview.tsx",
           "operation": "modify",
-          "description": "Add preflight checks (secure context / camera API availability) to present immediate actionable guidance (e.g., HTTPS required) instead of looping on loading. Map errors from the selected camera component’s `useCamera` hook (and common browser error phrases) into user-friendly English messages for: permission denied, not supported, no device found, camera in use/NotReadable, and generic failures. Provide a Retry action that calls `retry`/`startCamera` and include an aria-live (assertive) announcement region for errors and retry results. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/screens/CameraReaderScreen.tsx",
-          "operation": "modify",
-          "description": "Ensure camera error and guidance messages are also discoverable via the existing `LiveAnnouncer` mechanism (e.g., pass a callback/prop so camera errors trigger announcements) while keeping OCR fully on-device and not sending images/text to any backend."
+          "description": "Tighten preflight + error mapping so failures consistently render an actionable error screen instead of falling through to loading. Specifically: (1) treat non-secure context as a terminal state (no repeated auto-retries); (2) ensure permission-denied and in-use scenarios are detected reliably (via the hook error.type plus message heuristics) and always show the \"Retry Camera Access\" button wired to the hook retry() call; (3) ensure status/error strings announced via onStatusChange remain English and are not spammed by repeated retries. Use the selected \"camera\" component hook (useCamera) for error information and retry capability; verify the component's usage instructions before implementing."
         }
       ]
     }

@@ -1,85 +1,76 @@
 {
   "kind": "build_request",
-  "title": "Fix camera preview not starting reliably on first load",
+  "title": "Fix camera preview not starting and ensure reliable fallback + guidance",
   "priority": "high",
   "requirements": [
     {
-      "id": "REQ-9",
-      "text": "Improve camera startup reliability so the live camera preview starts consistently on initial app load and after returning to the tab/app.",
+      "id": "REQ-12",
+      "text": "Fix the camera startup flow so the live camera preview reliably starts on initial load (on supported devices/browsers) instead of staying stuck on the loading screen.",
       "target": "frontend",
       "source": {
         "messageIds": [
           "msg-6"
         ],
         "quotes": [
-          "The camera isn't starting yp"
+          "The camera doesn't even start"
         ]
       },
       "acceptanceCriteria": [
-        "On supported devices/browsers with camera permission granted, the preview shows within 2 seconds in at least 10 consecutive reloads.",
-        "If the app is backgrounded and then resumed, the preview either remains active or restarts automatically without requiring a full page refresh.",
-        "If the video element fails to reach a playable state after an initial start attempt, the app performs at least one automatic retry and then transitions to a user-action fallback (see REQ-10) rather than staying indefinitely on a loading screen."
+        "On a device/browser that supports getUserMedia in a secure context (HTTPS), the camera preview transitions from \"Starting Camera...\" to a live video feed without requiring a manual reload.",
+        "If automatic startup fails, the app must not remain indefinitely in a loading state; it must transition to either a clear error screen or the manual-start fallback.",
+        "Re-entering the tab/app after backgrounding (visibilitychange to visible) triggers a camera resume attempt, and the preview starts if permissions/devices are available."
       ]
     },
     {
-      "id": "REQ-10",
-      "text": "Add an accessible user-gesture fallback to start the camera when autoplay/permission policies prevent starting getUserMedia on mount (e.g., show a full-screen 'Tap to start camera' action when camera startup does not complete promptly).",
+      "id": "REQ-13",
+      "text": "Ensure the manual user-gesture fallback to start the camera is triggered consistently when automatic startup does not complete promptly, and that the fallback action successfully starts the camera when tapped.",
       "target": "frontend",
       "source": {
         "messageIds": [
           "msg-6"
         ],
         "quotes": [
-          "The camera isn't starting yp"
+          "The camera doesn't even start"
         ]
       },
       "acceptanceCriteria": [
-        "If the camera is not active after a short timeout (e.g., ~2–3 seconds) and no explicit error is available, a full-screen, high-contrast CTA appears allowing the user to start the camera with a tap.",
-        "The fallback CTA is keyboard operable (Enter/Space) and screen-reader discoverable with a clear English label (e.g., 'Tap to start camera').",
-        "Tapping the fallback CTA triggers the same camera start flow and, on success, the preview replaces the CTA automatically."
+        "If the camera has not become active shortly after startup attempt, a full-screen fallback UI is shown with a single large \"Start Camera\" action (as implemented by CameraStartupFallback).",
+        "Tapping the fallback \"Start Camera\" button performs a user-gesture camera start attempt and, on success, shows the live camera preview.",
+        "Fallback and retry flows do not create an infinite loop of retries; after configured retries, the user always has an actionable next step (Start Camera, Retry Camera Access, or a specific error message)."
       ]
     },
     {
-      "id": "REQ-11",
-      "text": "Improve camera error handling and user guidance to reduce \"camera isn't starting\" reports by providing actionable, English error states for common failures (permission denied, insecure context/HTTP, no camera device, camera already in use).",
+      "id": "REQ-14",
+      "text": "Improve camera error detection and user guidance so that when camera startup fails, the UI surfaces a specific, English, actionable message (e.g., HTTPS required, permission denied, no camera found, camera in use) rather than only showing a generic loading state.",
       "target": "frontend",
       "source": {
         "messageIds": [
           "msg-6"
         ],
         "quotes": [
-          "The camera isn't starting yp"
+          "The camera doesn't even start"
         ]
       },
       "acceptanceCriteria": [
-        "When camera access is denied, the UI clearly instructs the user to allow camera permission in the browser settings and offers a Retry action.",
-        "When running in an insecure context (non-HTTPS) or when camera APIs are unavailable, the UI clearly indicates the requirement (e.g., 'Camera requires HTTPS') and does not loop endlessly on 'Starting Camera...'.",
-        "When the camera is already in use or cannot be started, the UI provides a Retry action and announces the error message through accessible live-region semantics.",
-        "No error state blocks the user from attempting to retry camera access without reloading the page."
+        "If window.isSecureContext is false, show the existing HTTPS-required message and do not keep retrying indefinitely.",
+        "If permission is denied, show an explicit permission-denied message and present a working \"Retry Camera Access\" button.",
+        "If the camera is in use (NotReadableError/in-use), show the existing in-use guidance and present a working \"Retry Camera Access\" button.",
+        "All user-facing error and status text remains in English."
       ]
     }
   ],
   "constraints": [
-    "Frontend files under frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useInternetIdentity.tsx, frontend/src/hooks/useActor.ts, frontend/src/main.tsx, and frontend/src/components/ui must not be edited; compose them instead.",
-    "Do not send camera images or recognized text to the backend; all OCR remains on-device."
+    "Frontend immutable paths must not be edited: frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useInternetIdentity.tsx, frontend/src/hooks/useActor.ts, frontend/src/main.tsx, frontend/src/components/ui.",
+    "Backend remains single-actor; do not introduce additional backend services or external databases.",
+    "Do not send captured images or recognized text to the backend (on-device only)."
   ],
   "nonGoals": [
-    "Adding backend persistence, history storage, or cloud upload.",
-    "Adding third-party authentication beyond Internet Identity.",
-    "Introducing real-time communication features (e.g., WebSockets)."
+    "Adding new authentication methods beyond Internet Identity.",
+    "Implementing real-time communication (WebSockets) or push notifications.",
+    "Changing the core OCR-to-speech flow beyond what is necessary to fix camera startup reliability."
   ],
   "imageRequirements": {
     "required": [],
     "edits": []
-  },
-  "userProfileUpdate": {
-    "goalsToAdd": [],
-    "goalsToRemove": [],
-    "preferencesToAdd": [],
-    "preferencesToRemove": [],
-    "miscToAdd": [],
-    "miscToRemove": [],
-    "fieldsToSet": {},
-    "fieldsToDelete": []
   }
 }

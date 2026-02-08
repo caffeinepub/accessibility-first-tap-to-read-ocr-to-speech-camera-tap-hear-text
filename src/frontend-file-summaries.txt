@@ -1,7 +1,7 @@
 {
   "frontend/src/App.tsx": "Main app component that renders the single CameraReaderScreen with no routing or navigation.",
   "frontend/src/screens/CameraReaderScreen.tsx": "Primary screen orchestrating camera capture, OCR processing, TTS playback, and accessibility features with full-screen camera view, tap-to-capture interaction, and camera status change announcements via LiveAnnouncer.",
-  "frontend/src/components/CameraPreview.tsx": "Enhanced camera preview component with automatic retry logic, page visibility handling, startup watchdog timer, preflight checks for secure context and API availability, user-friendly error messages with retry actions, and accessible live-region announcements for all camera states.",
+  "frontend/src/components/CameraPreview.tsx": "Camera preview component with deterministic startup flow, single-attempt initialization with watchdog timer, proper concurrent-start guards, actionable error states with retry capability, and visibility-change resume handling.",
   "frontend/src/components/PlaybackControls.tsx": "Large, accessible playback control buttons (Pause/Resume, Repeat, Speed Up, Slow Down) with explicit ARIA labels and minimum 60px height for touch targets.",
   "frontend/src/components/LiveAnnouncer.tsx": "ARIA live region component for announcing status changes to screen readers with configurable politeness levels.",
   "frontend/src/components/AudioStateCue.tsx": "Helper component that maps processing states to user-friendly messages for audio feedback.",

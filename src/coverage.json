@@ -1,7 +1,7 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-08T00:20:49.628Z",
+  "generatedAt": "2026-02-08T02:16:37.429Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
@@ -11,55 +11,47 @@
     "implemented": 3,
     "items": [
       {
-        "id": "REQ-10",
-        "summary": "Add an accessible user-gesture fallback to start the camera when autoplay/permission policies prevent starting getUserMedia on mount (e.g., show a full-screen 'Tap to start camera' action when camera startup does not complete promptly).",
+        "id": "REQ-12",
+        "summary": "Fix the camera startup flow so the live camera preview reliably starts on initial load (on supported devices/browsers) instead of staying stuck on the loading screen.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/components/CameraStartupFallback.tsx",
           "frontend/src/components/CameraPreview.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/components/CameraStartupFallback.tsx",
           "frontend/src/components/CameraPreview.tsx"
         ]
       },
       {
-        "id": "REQ-11",
-        "summary": "Improve camera error handling and user guidance to reduce \"camera isn't starting\" reports by providing actionable, English error states for common failures (permission denied, insecure context/HTTP, no camera device, camera already in use).",
+        "id": "REQ-13",
+        "summary": "Ensure the manual user-gesture fallback to start the camera is triggered consistently when automatic startup does not complete promptly, and that the fallback action successfully starts the camera when tapped.",
         "status": "implemented",
         "plannedFiles": [
           "frontend/src/components/CameraPreview.tsx",
-          "frontend/src/screens/CameraReaderScreen.tsx"
+          "frontend/src/components/CameraStartupFallback.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/components/CameraPreview.tsx",
-          "frontend/src/screens/CameraReaderScreen.tsx"
+          "frontend/src/components/CameraPreview.tsx"
         ]
       },
       {
-        "id": "REQ-9",
-        "summary": "Improve camera startup reliability so the live camera preview starts consistently on initial app load and after returning to the tab/app.",
+        "id": "REQ-14",
+        "summary": "Improve camera error detection and user guidance so that when camera startup fails, the UI surfaces a specific, English, actionable message (e.g., HTTPS required, permission denied, no camera found, camera in use) rather than only showing a generic loading state.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/components/CameraPreview.tsx",
-          "frontend/src/screens/CameraReaderScreen.tsx"
+          "frontend/src/components/CameraPreview.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/components/CameraPreview.tsx",
-          "frontend/src/screens/CameraReaderScreen.tsx"
+          "frontend/src/components/CameraPreview.tsx"
         ]
       }
     ]
   },
   "changedFiles": [
     "build-request.json",
-    "build-template/README.md",
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
     "frontend/src/components/CameraPreview.tsx",
-    "frontend/src/components/CameraStartupFallback.tsx",
-    "frontend/src/screens/CameraReaderScreen.tsx",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",
