@@ -1,0 +1,173 @@
+{
+  "kind": "feature_evidence_report",
+  "features": [
+    {
+      "featureId": "feature-implement-a-minimal-clutter-free-single-screen-experience-that-opens-directly-to-a-live-camera-view-with-no-menus-or-small-visible-controls-on-the-first-screen",
+      "featureTitle": "Implement a minimal, clutter-free single-screen experience that opens directly to a live camera view with no menus or small visible controls on the first screen.",
+      "files": [
+        "frontend/src/App.tsx",
+        "frontend/src/index.css",
+        "frontend/src/main.tsx",
+        "frontend/src/screens/CameraReaderScreen.tsx"
+      ],
+      "components": [
+        "camera@1.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-1"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-allow-the-user-to-tap-anywhere-on-the-screen-to-capture-the-current-camera-frame-and-provide-immediate-haptic-confirmation-of-capture-when-supported-by-the-device-browser",
+      "featureTitle": "Allow the user to tap anywhere on the screen to capture the current camera frame and provide immediate haptic confirmation of capture when supported by the device/browser.",
+      "files": [
+        "frontend/src/components/LiveAnnouncer.tsx",
+        "frontend/src/hooks/useCaptureHaptics.ts",
+        "frontend/src/screens/CameraReaderScreen.tsx"
+      ],
+      "components": [
+        "camera@1.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-2"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-run-on-device-ocr-automatically-after-each-capture-and-extract-recognized-text-without-sending-images-or-text-to-the-backend",
+      "featureTitle": "Run on-device OCR automatically after each capture and extract recognized text without sending images or text to the backend.",
+      "files": [
+        "frontend/src/components/CameraPreview.tsx",
+        "frontend/src/hooks/useOnDeviceOcr.ts",
+        "frontend/src/screens/CameraReaderScreen.tsx"
+      ],
+      "components": [
+        "camera@1.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-3"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-as-soon-as-text-is-recognized-immediately-read-it-aloud-using-in-browser-text-to-speech-and-provide-audio-feedback-for-key-states-capture-processing-started-processing-complete-errors",
+      "featureTitle": "As soon as text is recognized, immediately read it aloud using in-browser text-to-speech and provide audio feedback for key states (capture, processing started, processing complete, errors).",
+      "files": [
+        "frontend/src/components/AudioStateCue.tsx",
+        "frontend/src/hooks/useTextToSpeech.ts",
+        "frontend/src/screens/CameraReaderScreen.tsx"
+      ],
+      "components": [
+        "camera@1.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-4"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-provide-large-screen-reader-friendly-playback-controls-pause-repeat-speed-up-slow-down-that-are-discoverable-and-operable-via-screen-readers-keyboard-and-switch-access-while-keeping-the-visual-ui-minimal-controls-may-be-visually-hidden-but-must-remain-accessible",
+      "featureTitle": "Provide large, screen-reader-friendly playback controls (Pause, Repeat, Speed up, Slow down) that are discoverable and operable via screen readers, keyboard, and switch access, while keeping the visual UI minimal (controls may be visually hidden but must remain accessible).",
+      "files": [
+        "frontend/src/components/PlaybackControls.tsx",
+        "frontend/src/index.css",
+        "frontend/src/screens/CameraReaderScreen.tsx"
+      ],
+      "components": [
+        "camera@1.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-5"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-enforce-portrait-first-behavior-optimize-layout-for-portrait-orientation-and-when-the-device-is-in-landscape-show-an-accessible-prompt-instructing-the-user-to-rotate-back-to-portrait-without-breaking-core-functionality",
+      "featureTitle": "Enforce portrait-first behavior: optimize layout for portrait orientation and, when the device is in landscape, show an accessible prompt instructing the user to rotate back to portrait (without breaking core functionality).",
+      "files": [
+        "frontend/src/components/OrientationPrompt.tsx",
+        "frontend/src/hooks/useOrientation.ts",
+        "frontend/src/screens/CameraReaderScreen.tsx"
+      ],
+      "components": [
+        "camera@1.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-6"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-add-robust-accessibility-semantics-and-announcements-throughout-the-flow-ensure-the-tap-to-capture-surface-is-accessible-status-updates-are-announced-e-g-via-live-regions-and-the-app-is-fully-usable-with-screen-readers-without-needing-vision",
+      "featureTitle": "Add robust accessibility semantics and announcements throughout the flow: ensure the tap-to-capture surface is accessible, status updates are announced (e.g., via live regions), and the app is fully usable with screen readers without needing vision.",
+      "files": [
+        "frontend/src/components/CameraPreview.tsx",
+        "frontend/src/components/LiveAnnouncer.tsx",
+        "frontend/src/screens/CameraReaderScreen.tsx"
+      ],
+      "components": [
+        "camera@1.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-7"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-apply-a-cohesive-visual-theme-consistent-with-a-blind-first-no-clutter-experience-high-contrast-calm-minimal-typography-and-layout-avoiding-decorative-elements-that-distract-from-the-capture-read-flow",
+      "featureTitle": "Apply a cohesive visual theme consistent with a blind-first, no-clutter experience: high-contrast, calm, minimal typography and layout, avoiding decorative elements that distract from the capture/read flow.",
+      "files": [
+        "frontend/src/index.css",
+        "frontend/src/screens/CameraReaderScreen.tsx"
+      ],
+      "components": [
+        "camera@1.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-8"
+      ],
+      "confidence": "high"
+    }
+  ]
+}

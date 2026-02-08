@@ -1,0 +1,74 @@
+{
+  "kind": "spec_vs_diff_report",
+  "version": "1.0",
+  "generatedAt": "2026-02-07T23:43:33.486Z",
+  "summary": "Most core tap-to-capture, on-device OCR, TTS reading, orientation handling, and basic accessibility scaffolding are present. However, some key acceptance criteria are not fully met (minimal/no-controls first screen, and required audio feedback for capture/processing/success states). Additionally, Internet Identity/auth scaffolding was added even though accounts/logins are explicitly out of scope.",
+  "missing_requirements": [
+    {
+      "id": "REQ-1",
+      "requirement": "Implement a minimal, clutter-free single-screen experience that opens directly to a live camera view with no menus or small visible controls on the first screen.",
+      "reason": "The initial screen includes visible UI overlays/controls (instruction overlay at top and playback controls area at bottom), which conflicts with the requirement of no visible menus/toolbars/controls on the first screen and a clutter-free camera-only initial view.",
+      "evidence": [
+        "frontend/src/components/CameraPreview.tsx (\"Visual instruction overlay\")",
+        "frontend/src/screens/CameraReaderScreen.tsx (renders <PlaybackControls> in an absolute bottom container)",
+        "frontend/src/components/PlaybackControls.tsx (visible button labels/icons)"
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "requirement": "As soon as text is recognized, immediately read it aloud using in-browser text-to-speech and provide audio feedback for key states (capture, processing started, processing complete, errors).",
+      "reason": "While recognized text is spoken, the diff does not show TTS audio cues for capture confirmation, OCR processing started, or OCR finished/success state. It appears to rely on LiveAnnouncer (screen reader) for some states, and the AudioStateCue component is a no-op (does not actually play any audio).",
+      "evidence": [
+        "frontend/src/screens/CameraReaderScreen.tsx (sets announcements for \"Image captured\"/\"Processing image\"/\"Text recognized\" but only calls speak() for recognized text, empty, and error)",
+        "frontend/src/components/AudioStateCue.tsx (contains only a comment; returns null; no audio)",
+        "frontend/src/components/LiveAnnouncer.tsx (screen-reader live region, not TTS audio feedback)"
+      ]
+    },
+    {
+      "id": "REQ-5",
+      "requirement": "Provide large, screen-reader-friendly playback controls (Pause, Repeat, Speed up, Slow down) that are discoverable and operable via screen readers, keyboard, and switch access, while keeping the visual UI minimal (controls may be visually hidden but must remain accessible).",
+      "reason": "Controls are implemented and large, but they are not visually hidden/minimized as described; they appear rendered normally in a visible bottom container. The requirement allows visually hidden controls to keep the UI minimal, but the diff does not implement the 'visually hidden but accessible' approach.",
+      "evidence": [
+        "frontend/src/screens/CameraReaderScreen.tsx (\"Playback controls - visually hidden but accessible\" comment, but container uses visible layout classes \"absolute bottom-0 ... p-4\")",
+        "frontend/src/components/PlaybackControls.tsx (renders standard visible <Button> elements with text/icons)"
+      ]
+    }
+  ],
+  "hallucinated_features": [
+    {
+      "description": "Internet Identity authentication/account scaffolding (InternetIdentityProvider, useInternetIdentity, useActor) added despite explicit non-goals/constraints forbidding accounts/logins/profiles.",
+      "reason": "BuildRequest explicitly lists accounts/logins as non-goals and says not to introduce accounts. The diff introduces Internet Identity provider and identity-based actor creation logic.",
+      "evidence": [
+        "frontend/src/main.tsx (wraps app with InternetIdentityProvider)",
+        "frontend/src/hooks/useInternetIdentity.ts (Internet Identity login/logout context)",
+        "frontend/src/hooks/useActor.ts (identity-based actor creation, authenticated vs anonymous)"
+      ]
+    }
+  ],
+  "confidence": 0.72,
+  "changed_files": [
+    "all_files_summary.json",
+    "backend/main.mo",
+    "frontend-file-summaries.txt",
+    "frontend/index.css",
+    "frontend/index.html",
+    "frontend/src/App.tsx",
+    "frontend/src/components/AudioStateCue.tsx",
+    "frontend/src/components/CameraPreview.tsx",
+    "frontend/src/components/LiveAnnouncer.tsx",
+    "frontend/src/components/OrientationPrompt.tsx",
+    "frontend/src/components/PlaybackControls.tsx",
+    "frontend/src/hooks/useActor.ts",
+    "frontend/src/hooks/useCaptureHaptics.ts",
+    "frontend/src/hooks/useInternetIdentity.ts",
+    "frontend/src/hooks/useOnDeviceOcr.ts",
+    "frontend/src/hooks/useOrientation.ts",
+    "frontend/src/hooks/useQueries.ts",
+    "frontend/src/hooks/useTextToSpeech.ts",
+    "frontend/src/index.css",
+    "frontend/src/main.tsx",
+    "frontend/src/screens/CameraReaderScreen.tsx",
+    "frontend/tailwind.config.js",
+    "project_state.json"
+  ]
+}

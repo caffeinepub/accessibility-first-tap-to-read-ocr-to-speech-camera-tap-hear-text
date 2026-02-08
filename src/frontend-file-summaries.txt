@@ -1,0 +1,17 @@
+{
+  "frontend/src/App.tsx": "Main app component that renders the single CameraReaderScreen with no routing or navigation.",
+  "frontend/src/screens/CameraReaderScreen.tsx": "Primary screen orchestrating camera capture, OCR processing, TTS playback, and accessibility features with full-screen camera view and tap-to-capture interaction.",
+  "frontend/src/components/CameraPreview.tsx": "Full-screen camera preview component with tap-anywhere-to-capture functionality, keyboard accessibility, and error handling using the useCamera hook.",
+  "frontend/src/components/PlaybackControls.tsx": "Large, accessible playback control buttons (Pause/Resume, Repeat, Speed Up, Slow Down) with explicit ARIA labels and minimum 60px height for touch targets.",
+  "frontend/src/components/LiveAnnouncer.tsx": "ARIA live region component for announcing status changes to screen readers with configurable politeness levels.",
+  "frontend/src/components/AudioStateCue.tsx": "Helper component that maps processing states to user-friendly messages for audio feedback.",
+  "frontend/src/components/OrientationPrompt.tsx": "Full-screen prompt displayed in landscape orientation instructing users to rotate to portrait with ARIA announcements.",
+  "frontend/src/hooks/useTextToSpeech.ts": "Web Speech API hook managing text-to-speech with controls for speak, pause, resume, cancel, and adjustable speech rate.",
+  "frontend/src/hooks/useOnDeviceOcr.ts": "Tesseract.js OCR hook that dynamically loads the library from CDN and performs client-side text recognition from images with worker management, error handling, and proper cleanup.",
+  "frontend/src/hooks/useCaptureHaptics.ts": "Hook providing haptic feedback via navigator.vibrate API with fallback detection for unsupported devices.",
+  "frontend/src/hooks/useOrientation.ts": "Hook detecting device orientation (portrait/landscape) using window dimensions and orientation events.",
+  "frontend/src/camera/useCamera.ts": "Complete camera management hook providing live preview, capture, error handling, and camera switching with proper cleanup.",
+  "frontend/src/hooks/useQueries.ts": "Placeholder file for React Query hooks (unused as app is fully client-side with no backend queries).",
+  "frontend/src/index.css": "Global styles with high-contrast warm amber/grayscale OKLCH color system, accessibility utilities (sr-only, focus indicators), and minimum touch target sizes.",
+  "frontend/package.json": "Package configuration with tesseract.js dependency added for on-device OCR functionality."
+}

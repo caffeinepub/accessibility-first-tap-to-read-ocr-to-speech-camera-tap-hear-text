@@ -1,0 +1,180 @@
+{
+  "kind": "build_request",
+  "title": "Accessibility-first tap-to-read OCR to speech (camera → tap → hear text)",
+  "priority": "normal",
+  "requirements": [
+    {
+      "id": "REQ-1",
+      "text": "Implement a minimal, clutter-free single-screen experience that opens directly to a live camera view with no menus or small visible controls on the first screen.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-2"
+        ],
+        "quotes": [
+          "App opens directly to camera",
+          "Has no visual clutter",
+          "No menus on first screen",
+          "No tiny buttons"
+        ]
+      },
+      "acceptanceCriteria": [
+        "On initial load, the primary UI is a full-screen camera preview.",
+        "No visible menus/toolbars are shown on the first screen.",
+        "All interactive hit targets meet accessible sizing guidance (no tiny tap targets)."
+      ]
+    },
+    {
+      "id": "REQ-2",
+      "text": "Allow the user to tap anywhere on the screen to capture the current camera frame and provide immediate haptic confirmation of capture when supported by the device/browser.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-2"
+        ],
+        "quotes": [
+          "Tap anywhere on screen → capture image",
+          "Haptic vibration confirms capture"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Tapping anywhere over the camera preview triggers a capture action.",
+        "If vibration is supported and permitted, the device vibrates immediately after capture.",
+        "If vibration is not supported, the app provides an accessible alternative confirmation (e.g., spoken confirmation)."
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "text": "Run on-device OCR automatically after each capture and extract recognized text without sending images or text to the backend.",
+      "target": "both",
+      "source": {
+        "messageIds": [
+          "msg-2"
+        ],
+        "quotes": [
+          "OCR runs automatically",
+          "OCR: ML Kit Text Recognition (on-device)",
+          "No accounts. No cloud. No subscriptions."
+        ]
+      },
+      "acceptanceCriteria": [
+        "After capture, OCR starts automatically without additional user steps.",
+        "No network calls are made to send captured images or recognized text to the backend for processing or storage.",
+        "Recognized text is stored only in client state for the current session (refresh clears it)."
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "text": "As soon as text is recognized, immediately read it aloud using in-browser text-to-speech and provide audio feedback for key states (capture, processing started, processing complete, errors).",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-2"
+        ],
+        "quotes": [
+          "Instant Speech Output",
+          "Start reading aloud",
+          "Audio feedback for everything",
+          "Text-to-Speech: Android TTS"
+        ]
+      },
+      "acceptanceCriteria": [
+        "When OCR completes successfully, speech starts automatically without extra taps.",
+        "Audio feedback is provided for: capture confirmation, OCR in progress, OCR finished, and error/empty-text outcomes.",
+        "If OCR returns no text, the app announces that no text was found."
+      ]
+    },
+    {
+      "id": "REQ-5",
+      "text": "Provide large, screen-reader-friendly playback controls (Pause, Repeat, Speed up, Slow down) that are discoverable and operable via screen readers, keyboard, and switch access, while keeping the visual UI minimal (controls may be visually hidden but must remain accessible).",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-2"
+        ],
+        "quotes": [
+          "Large buttons (invisible but accessible): Pause Repeat Speed up / slow down",
+          "All labeled properly for TalkBack.",
+          "Is fully usable with screen readers"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Controls exist for Pause, Repeat, Increase speech rate, Decrease speech rate.",
+        "Each control has an explicit accessible name/label in English.",
+        "Controls are reachable via Tab/keyboard navigation and operable via Enter/Space.",
+        "Screen readers can discover and activate each control even if the controls are visually hidden."
+      ]
+    },
+    {
+      "id": "REQ-6",
+      "text": "Enforce portrait-first behavior: optimize layout for portrait orientation and, when the device is in landscape, show an accessible prompt instructing the user to rotate back to portrait (without breaking core functionality).",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-2"
+        ],
+        "quotes": [
+          "Works in portrait only"
+        ]
+      },
+      "acceptanceCriteria": [
+        "In portrait, the UI fills the screen and remains usable.",
+        "In landscape, the app shows a clear, accessible instruction to rotate to portrait.",
+        "Screen readers announce the orientation prompt when it appears."
+      ]
+    },
+    {
+      "id": "REQ-7",
+      "text": "Add robust accessibility semantics and announcements throughout the flow: ensure the tap-to-capture surface is accessible, status updates are announced (e.g., via live regions), and the app is fully usable with screen readers without needing vision.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-2"
+        ],
+        "quotes": [
+          "Is fully usable with screen readers",
+          "Think: Point phone → tap anywhere → hear text."
+        ]
+      },
+      "acceptanceCriteria": [
+        "Screen readers announce the main action/instruction on the camera screen (how to capture).",
+        "Status changes (processing, success, failure) are announced to assistive tech.",
+        "No core action requires reading or interpreting visual-only UI."
+      ]
+    },
+    {
+      "id": "REQ-8",
+      "text": "Apply a cohesive visual theme consistent with a blind-first, no-clutter experience: high-contrast, calm, minimal typography and layout, avoiding decorative elements that distract from the capture/read flow.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-2"
+        ],
+        "quotes": [
+          "Has no visual clutter",
+          "Blind-First UX Rules"
+        ]
+      },
+      "acceptanceCriteria": [
+        "The UI uses a consistent color palette and typography suitable for high contrast.",
+        "Visible elements are limited to what is necessary for the capture/read experience.",
+        "No blue/purple-dominant theme is used."
+      ]
+    }
+  ],
+  "constraints": [
+    "Must adhere to the provided project stack (React + TypeScript frontend, Motoko single-actor backend on the Internet Computer).",
+    "Do not modify files under frontend/src/components/ui or other immutablePaths listed in SYSTEM_CONTEXT; compose them instead.",
+    "Do not introduce accounts, subscriptions, or cloud-based OCR/TTS services.",
+    "Do not store captured images or recognized text persistently on the backend."
+  ],
+  "nonGoals": [
+    "Building a native Android (Kotlin) application or integrating Android-only components like ML Kit APIs directly.",
+    "User accounts, logins, profiles, syncing across devices, or any subscription/payment features.",
+    "Uploading images to a server for OCR or saving scan history by default."
+  ],
+  "imageRequirements": {
+    "required": [],
+    "edits": []
+  }
+}

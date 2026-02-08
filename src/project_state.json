@@ -1,0 +1,116 @@
+{
+  "schemaVersion": "1.0.0",
+  "projectStateVersion": 3,
+  "summary": "Android accessibility-first OCR-to-speech app: point phone, tap anywhere to scan text with on-device ML Kit OCR and read aloud via Android TTS; minimal UI, TalkBack-friendly, no accounts/cloud/subscriptions.",
+  "architectural_notes": [
+    "Platform: Android (Kotlin).",
+    "OCR: ML Kit Text Recognition (on-device).",
+    "Speech: Android Text-to-Speech (TTS).",
+    "Privacy: no accounts, no cloud, no subscriptions; process on-device.",
+    "UX: accessibility-first for TalkBack; minimal UI; portrait-only."
+  ],
+  "known_issues": [],
+  "isFixRequest": false,
+  "existing_features": [
+    {
+      "id": "feature-implement-a-minimal-clutter-free-single-screen-experience-that-opens-directly-to-a-live-camera-view-with-no-menus-or-small-visible-controls-on-the-first-screen",
+      "title": "Implement a minimal, clutter-free single-screen experience that opens directly to a live camera view with no menus or small visible controls on the first screen.",
+      "reqIds": [
+        "REQ-1"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-allow-the-user-to-tap-anywhere-on-the-screen-to-capture-the-current-camera-frame-and-provide-immediate-haptic-confirmation-of-capture-when-supported-by-the-device-browser",
+      "title": "Allow the user to tap anywhere on the screen to capture the current camera frame and provide immediate haptic confirmation of capture when supported by the device/browser.",
+      "reqIds": [
+        "REQ-2"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-run-on-device-ocr-automatically-after-each-capture-and-extract-recognized-text-without-sending-images-or-text-to-the-backend",
+      "title": "Run on-device OCR automatically after each capture and extract recognized text without sending images or text to the backend.",
+      "reqIds": [
+        "REQ-3"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-as-soon-as-text-is-recognized-immediately-read-it-aloud-using-in-browser-text-to-speech-and-provide-audio-feedback-for-key-states-capture-processing-started-processing-complete-errors",
+      "title": "As soon as text is recognized, immediately read it aloud using in-browser text-to-speech and provide audio feedback for key states (capture, processing started, processing complete, errors).",
+      "reqIds": [
+        "REQ-4"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-provide-large-screen-reader-friendly-playback-controls-pause-repeat-speed-up-slow-down-that-are-discoverable-and-operable-via-screen-readers-keyboard-and-switch-access-while-keeping-the-visual-ui-minimal-controls-may-be-visually-hidden-but-must-remain-accessible",
+      "title": "Provide large, screen-reader-friendly playback controls (Pause, Repeat, Speed up, Slow down) that are discoverable and operable via screen readers, keyboard, and switch access, while keeping the visual UI minimal (controls may be visually hidden but must remain accessible).",
+      "reqIds": [
+        "REQ-5"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-enforce-portrait-first-behavior-optimize-layout-for-portrait-orientation-and-when-the-device-is-in-landscape-show-an-accessible-prompt-instructing-the-user-to-rotate-back-to-portrait-without-breaking-core-functionality",
+      "title": "Enforce portrait-first behavior: optimize layout for portrait orientation and, when the device is in landscape, show an accessible prompt instructing the user to rotate back to portrait (without breaking core functionality).",
+      "reqIds": [
+        "REQ-6"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-robust-accessibility-semantics-and-announcements-throughout-the-flow-ensure-the-tap-to-capture-surface-is-accessible-status-updates-are-announced-e-g-via-live-regions-and-the-app-is-fully-usable-with-screen-readers-without-needing-vision",
+      "title": "Add robust accessibility semantics and announcements throughout the flow: ensure the tap-to-capture surface is accessible, status updates are announced (e.g., via live regions), and the app is fully usable with screen readers without needing vision.",
+      "reqIds": [
+        "REQ-7"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-apply-a-cohesive-visual-theme-consistent-with-a-blind-first-no-clutter-experience-high-contrast-calm-minimal-typography-and-layout-avoiding-decorative-elements-that-distract-from-the-capture-read-flow",
+      "title": "Apply a cohesive visual theme consistent with a blind-first, no-clutter experience: high-contrast, calm, minimal typography and layout, avoiding decorative elements that distract from the capture/read flow.",
+      "reqIds": [
+        "REQ-8"
+      ],
+      "version": 1
+    }
+  ],
+  "new_feature_requests": [
+    {
+      "id": "AR-1",
+      "summary": "One-tap scan flow: app opens directly to camera; tap anywhere captures image; haptic vibration confirms capture; OCR runs automatically",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-2",
+      "summary": "Instant speech output: automatically read recognized text aloud via Android TTS immediately after OCR completes",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-3",
+      "summary": "Accessible controls for playback: large/invisible but accessible TalkBack-labeled actions for Pause, Repeat, Speed up, Slow down",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-4",
+      "summary": "Blind-first UX rules: no visual clutter, no tiny buttons, no menus on first screen, audio feedback for everything, portrait-only operation, fully usable with screen readers (TalkBack)",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-5",
+      "summary": "Privacy/offline constraints: no accounts, no cloud, no subscriptions; use on-device ML Kit Text Recognition",
+      "reqIds": [],
+      "status": "pending"
+    }
+  ],
+  "gameProjectType": "none",
+  "projectName": "Accessibility-first tap-to-read OCR to speech (camera → tap → hear text)",
+  "clarification_mode": "instant",
+  "clarification_rounds": 0
+}

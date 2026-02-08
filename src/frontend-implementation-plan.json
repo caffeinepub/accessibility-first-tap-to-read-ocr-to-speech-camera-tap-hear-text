@@ -1,0 +1,221 @@
+{
+  "kind": "implementation_plan",
+  "version": "1.0",
+  "title": "Accessibility-first tap-to-read OCR → speech (single-screen camera)",
+  "requirements": [
+    {
+      "id": "REQ-1",
+      "summary": "Provide a clutter-free single-screen app that opens directly into a full-screen live camera preview with no visible menus and accessible-sized interactions.",
+      "acceptanceCriteria": [
+        "On initial load, the primary UI is a full-screen camera preview.",
+        "No visible menus/toolbars are shown on the first screen.",
+        "All interactive hit targets meet accessible sizing guidance (no tiny tap targets)."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/App.tsx",
+          "operation": "create",
+          "description": "Create the single-screen app shell that renders the full-screen camera experience immediately on load (no menus/toolbars), and ensures all interactive regions meet accessible sizing guidance."
+        },
+        {
+          "path": "frontend/src/screens/CameraReaderScreen.tsx",
+          "operation": "create",
+          "description": "Implement the main camera screen layout with a full-viewport camera preview container that never collapses (stable dimensions/aspect handling) and avoids visible clutter while keeping interactions accessible."
+        },
+        {
+          "path": "frontend/src/index.css",
+          "operation": "create",
+          "description": "Add global styles for a minimal, high-contrast, calm theme and utility classes (e.g., visually-hidden but accessible) to support a no-clutter first screen without tiny tap targets."
+        },
+        {
+          "path": "frontend/src/main.tsx",
+          "operation": "modify",
+          "description": "Ensure the app boots directly into the single-screen camera experience via the App component and retains the existing providers."
+        }
+      ]
+    },
+    {
+      "id": "REQ-2",
+      "summary": "Enable tap-anywhere capture over the camera preview with immediate haptic confirmation when supported, otherwise provide an accessible alternative confirmation.",
+      "acceptanceCriteria": [
+        "Tapping anywhere over the camera preview triggers a capture action.",
+        "If vibration is supported and permitted, the device vibrates immediately after capture.",
+        "If vibration is not supported, the app provides an accessible alternative confirmation (e.g., spoken confirmation)."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/screens/CameraReaderScreen.tsx",
+          "operation": "modify",
+          "description": "Add a full-screen, accessible tap-to-capture interaction surface over the preview (keyboard-operable equivalent included) that triggers capture on activation; invoke haptics via navigator.vibrate when available, otherwise trigger an accessible audio/announcement confirmation."
+        },
+        {
+          "path": "frontend/src/hooks/useCaptureHaptics.ts",
+          "operation": "create",
+          "description": "Create a small hook/utility to perform best-effort haptic feedback using browser vibration support and return whether haptics were used so the UI can fall back to accessible confirmation."
+        },
+        {
+          "path": "frontend/src/components/LiveAnnouncer.tsx",
+          "operation": "create",
+          "description": "Create an aria-live announcer component to provide non-visual confirmations (used as the accessible fallback when haptics are unavailable)."
+        }
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "summary": "Perform automatic on-device OCR after each capture without sending images/text to the backend and keep recognized text only in ephemeral client state.",
+      "acceptanceCriteria": [
+        "After capture, OCR starts automatically without additional user steps.",
+        "No network calls are made to send captured images or recognized text to the backend for processing or storage.",
+        "Recognized text is stored only in client state for the current session (refresh clears it)."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/screens/CameraReaderScreen.tsx",
+          "operation": "modify",
+          "description": "After each capture, automatically start OCR and keep the recognized text only in component/client state (no persistence); ensure the flow does not invoke backend calls for OCR or storage."
+        },
+        {
+          "path": "frontend/src/hooks/useOnDeviceOcr.ts",
+          "operation": "create",
+          "description": "Implement an on-device OCR hook that accepts the captured image File/Blob and returns recognized text plus processing/error state; keep processing entirely on the client (no backend usage)."
+        },
+        {
+          "path": "frontend/package.json",
+          "operation": "modify",
+          "description": "Add/confirm a client-side OCR library dependency (on-device/in-browser) and any required build configuration, ensuring it performs OCR locally without cloud services."
+        },
+        {
+          "path": "frontend/src/components/CameraPreview.tsx",
+          "operation": "create",
+          "description": "Create a reusable camera preview component that uses the selected \"camera\" component hook (useCamera) for live preview + capture; Verify the component's usage instructions before implementing."
+        }
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "summary": "Automatically read recognized text aloud via in-browser text-to-speech and provide audio feedback for capture, processing, completion, empty results, and errors.",
+      "acceptanceCriteria": [
+        "When OCR completes successfully, speech starts automatically without extra taps.",
+        "Audio feedback is provided for: capture confirmation, OCR in progress, OCR finished, and error/empty-text outcomes.",
+        "If OCR returns no text, the app announces that no text was found."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/hooks/useTextToSpeech.ts",
+          "operation": "create",
+          "description": "Create a Web Speech API (speechSynthesis) controller hook supporting speak, pause/resume, cancel, and adjustable rate; expose current speaking state and error handling."
+        },
+        {
+          "path": "frontend/src/screens/CameraReaderScreen.tsx",
+          "operation": "modify",
+          "description": "Wire the OCR lifecycle to audio feedback: announce capture, announce OCR started, speak recognized text on success, announce completion, and announce empty/error outcomes; ensure speech starts automatically after OCR success."
+        },
+        {
+          "path": "frontend/src/components/AudioStateCue.tsx",
+          "operation": "create",
+          "description": "Add a lightweight helper that centralizes short spoken cues/phrases for key states (capture, processing, done, error, no text) to keep behavior consistent and accessible."
+        }
+      ]
+    },
+    {
+      "id": "REQ-5",
+      "summary": "Provide large, discoverable, screen-reader/keyboard/switch-operable playback controls (Pause, Repeat, Speed up, Slow down) while keeping the visual UI minimal (controls may be visually hidden but remain accessible).",
+      "acceptanceCriteria": [
+        "Controls exist for Pause, Repeat, Increase speech rate, Decrease speech rate.",
+        "Each control has an explicit accessible name/label in English.",
+        "Controls are reachable via Tab/keyboard navigation and operable via Enter/Space.",
+        "Screen readers can discover and activate each control even if the controls are visually hidden."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/PlaybackControls.tsx",
+          "operation": "create",
+          "description": "Create accessible playback controls bound to the TTS controller: Pause/Resume, Repeat, Increase rate, Decrease rate; ensure explicit English aria-labels, keyboard operability, and optionally visually-hidden presentation while remaining in the accessibility tree."
+        },
+        {
+          "path": "frontend/src/screens/CameraReaderScreen.tsx",
+          "operation": "modify",
+          "description": "Include the PlaybackControls in the screen in a way that keeps visuals minimal (e.g., visually hidden) while ensuring the controls are reachable by Tab/screen readers/switch access and have adequately large interactive targets."
+        },
+        {
+          "path": "frontend/src/index.css",
+          "operation": "modify",
+          "description": "Add/adjust CSS utilities for visually-hidden-but-focusable controls and ensure focus styles are high-contrast and visible when navigating via keyboard/switch access."
+        }
+      ]
+    },
+    {
+      "id": "REQ-6",
+      "summary": "Optimize for portrait orientation and show an accessible rotation prompt in landscape without breaking core functionality.",
+      "acceptanceCriteria": [
+        "In portrait, the UI fills the screen and remains usable.",
+        "In landscape, the app shows a clear, accessible instruction to rotate to portrait.",
+        "Screen readers announce the orientation prompt when it appears."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/hooks/useOrientation.ts",
+          "operation": "create",
+          "description": "Create a hook to detect portrait vs landscape using screen orientation/media queries and expose a boolean plus change events for UI reactions."
+        },
+        {
+          "path": "frontend/src/components/OrientationPrompt.tsx",
+          "operation": "create",
+          "description": "Create an accessible prompt/overlay that appears in landscape with clear instruction to rotate back to portrait and includes an announcement mechanism for screen readers."
+        },
+        {
+          "path": "frontend/src/screens/CameraReaderScreen.tsx",
+          "operation": "modify",
+          "description": "Wire orientation detection to conditionally show the OrientationPrompt in landscape while keeping camera + capture flow functional; ensure the prompt triggers an assistive-tech announcement when it appears."
+        }
+      ]
+    },
+    {
+      "id": "REQ-7",
+      "summary": "Add robust accessibility semantics and announcements across the capture→OCR→speech flow so the app is usable non-visually with screen readers.",
+      "acceptanceCriteria": [
+        "Screen readers announce the main action/instruction on the camera screen (how to capture).",
+        "Status changes (processing, success, failure) are announced to assistive tech.",
+        "No core action requires reading or interpreting visual-only UI."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/screens/CameraReaderScreen.tsx",
+          "operation": "modify",
+          "description": "Add accessibility semantics for the capture surface (clear instruction, role/labels), ensure there is a keyboard/switch-friendly activation path, and trigger live announcements for state transitions (processing, success, failure)."
+        },
+        {
+          "path": "frontend/src/components/LiveAnnouncer.tsx",
+          "operation": "modify",
+          "description": "Enhance the live region behavior (polite/assertive modes, deduping, and timing) to reliably announce status updates throughout capture/OCR/TTS states."
+        },
+        {
+          "path": "frontend/src/components/CameraPreview.tsx",
+          "operation": "modify",
+          "description": "Ensure the camera preview element and capture surface have appropriate non-visual instructions and do not interfere with assistive tech; Use the selected \"camera\" component hook (useCamera) to support live preview and capture. Verify the component's usage instructions before implementing."
+        }
+      ]
+    },
+    {
+      "id": "REQ-8",
+      "summary": "Apply a cohesive blind-first, high-contrast, minimal visual theme without decorative distractions and avoid blue/purple-dominant styling.",
+      "acceptanceCriteria": [
+        "The UI uses a consistent color palette and typography suitable for high contrast.",
+        "Visible elements are limited to what is necessary for the capture/read experience.",
+        "No blue/purple-dominant theme is used."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/index.css",
+          "operation": "modify",
+          "description": "Define a calm, high-contrast palette and minimal typography defaults (avoid blue/purple-dominant accents), reduce visual noise, and ensure focus indicators remain highly visible."
+        },
+        {
+          "path": "frontend/src/screens/CameraReaderScreen.tsx",
+          "operation": "modify",
+          "description": "Ensure the on-screen visuals are limited to essential elements (camera preview and minimal status/prompting) while relying on announcements for primary guidance."
+        }
+      ]
+    }
+  ]
+}

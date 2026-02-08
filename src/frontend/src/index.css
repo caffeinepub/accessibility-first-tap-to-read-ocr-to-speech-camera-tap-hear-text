@@ -1,0 +1,118 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+    :root {
+        --radius: 0.5rem;
+        
+        /* High-contrast warm grayscale palette for accessibility */
+        --background: 0.98 0 0;
+        --foreground: 0.15 0 0;
+        --card: 0.98 0 0;
+        --card-foreground: 0.15 0 0;
+        --popover: 0.98 0 0;
+        --popover-foreground: 0.15 0 0;
+        
+        /* Warm amber primary for high visibility */
+        --primary: 0.55 0.15 65;
+        --primary-foreground: 0.98 0 0;
+        
+        /* Neutral secondary */
+        --secondary: 0.88 0 0;
+        --secondary-foreground: 0.15 0 0;
+        
+        --muted: 0.92 0 0;
+        --muted-foreground: 0.45 0 0;
+        
+        /* Warm accent */
+        --accent: 0.88 0.08 55;
+        --accent-foreground: 0.15 0 0;
+        
+        /* High-contrast destructive */
+        --destructive: 0.55 0.22 25;
+        --destructive-foreground: 0.98 0 0;
+        
+        --border: 0.85 0 0;
+        --input: 0.85 0 0;
+        --ring: 0.55 0.15 65;
+    }
+
+    .dark {
+        --background: 0.12 0 0;
+        --foreground: 0.95 0 0;
+        --card: 0.18 0 0;
+        --card-foreground: 0.95 0 0;
+        --popover: 0.15 0 0;
+        --popover-foreground: 0.95 0 0;
+        
+        /* Bright amber for dark mode */
+        --primary: 0.70 0.18 60;
+        --primary-foreground: 0.12 0 0;
+        
+        --secondary: 0.25 0 0;
+        --secondary-foreground: 0.95 0 0;
+        
+        --muted: 0.22 0 0;
+        --muted-foreground: 0.65 0 0;
+        
+        --accent: 0.35 0.10 55;
+        --accent-foreground: 0.95 0 0;
+        
+        --destructive: 0.60 0.25 25;
+        --destructive-foreground: 0.95 0 0;
+        
+        --border: 0.30 0 0;
+        --input: 0.30 0 0;
+        --ring: 0.70 0.18 60;
+    }
+
+    * {
+        @apply border-border;
+    }
+    
+    body {
+        @apply bg-background text-foreground;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+    }
+}
+
+@layer utilities {
+    /* Screen reader only - visually hidden but accessible */
+    .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border-width: 0;
+    }
+
+    /* Focusable screen reader only elements */
+    .sr-only-focusable:focus,
+    .sr-only-focusable:active {
+        position: static;
+        width: auto;
+        height: auto;
+        overflow: visible;
+        clip: auto;
+        white-space: normal;
+    }
+
+    /* High contrast focus indicators for accessibility */
+    *:focus-visible {
+        outline: 3px solid oklch(var(--ring));
+        outline-offset: 2px;
+    }
+
+    /* Ensure minimum touch target sizes (48x48px minimum) */
+    button,
+    a,
+    [role="button"] {
+        min-height: 48px;
+        min-width: 48px;
+    }
+}
